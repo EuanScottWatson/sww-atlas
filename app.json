@@ -10,8 +10,12 @@
       "bundleIdentifier": "uk.sww.atlas",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "The SWW Atlas connects to your home server to store your trips.",
-        "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true, "NSAllowsArbitraryLoads": true }
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true,
+          "NSAllowsArbitraryLoads": true
+        }
       }
-    }
+    },
+    "icon": "./assets/icon.png"
   }
 }
