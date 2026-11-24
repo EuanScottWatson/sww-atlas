@@ -30,6 +30,12 @@ export function YearPicker({
         setOpen(false);
       }} />)}</View>}</View>;
 }
+function OptionPicker({label, value, options, onChange}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(option => option[0] === value);
+  return <View><Chip title={`${label}: ${selected?.[1] || 'All'}`} onPress={() => setOpen(!open)} />{open && <View style={styles.chips}>{options.map(([key, name]) => <Chip key={key} title={name} active={value === key} onPress={() => { onChange(key); setOpen(false); }} />)}</View>}</View>;
+}
+const monthOptions = [['all','All'], ...['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((name,index)=>[index+1,name])];
 function TripRow({
   trip,
   data,
@@ -78,10 +84,7 @@ export function TripsScreen({
   }, [data, year, month, status, region, sort, query, today]);
   return <><Heading title="Trips" subtitle={`${rows.length} records`} action={<Button title="＋ Add" onPress={onAdd} />} /><YearPicker year={year} setYear={setYear} data={data} /><TextInput style={[styles.input, {
       marginBottom: 12
-    }]} placeholder="Search trips, places or notes" placeholderTextColor={colors.muted} accessibilityLabel="Search trips" value={query} onChangeText={setQuery} /><View style={styles.chips}>{[['all', 'All'], ['upcoming', 'Upcoming'], ['past', 'Past'], ['undated', 'Undated']].map(([k, v]) => <Chip key={k} title={v} active={status === k} onPress={() => setStatus(k)} />)}</View><View style={styles.chips}><Chip title={`Region: ${region === 'all' ? 'All' : region}`} onPress={() => {
-        const opts = ['all', 'UK', 'Europe', 'Africa', 'North America', 'South America', 'Asia', 'Oceania'];
-        setRegion(opts[(opts.indexOf(region) + 1) % opts.length]);
-      }} /><Chip title={`Month: ${month === 'all' ? 'All' : month}`} onPress={() => setMonth(month === 'all' ? 1 : month === 12 ? 'all' : month + 1)} /><Chip title={`Sort: ${sort}`} onPress={() => setSort(sort === 'newest' ? 'oldest' : sort === 'oldest' ? 'name' : 'newest')} /></View><Pressable onPress={onJourney} accessibilityRole="button"><Text style={styles.link}>＋ Add a multi-stop journey</Text></Pressable><Text style={styles.section}>Destination                         Total</Text>{rows.length ? rows.map(t => <TripRow key={`${t.id}`} trip={t} data={data} onPress={() => onOpen('trips', t)} />) : <Notice>No trips match these filters.</Notice>}</>;
+    }]} placeholder="Search trips, places or notes" placeholderTextColor={colors.muted} accessibilityLabel="Search trips" value={query} onChangeText={setQuery} /><View style={styles.chips}>{[['all', 'All'], ['upcoming', 'Upcoming'], ['past', 'Past'], ['undated', 'Undated']].map(([k, v]) => <Chip key={k} title={v} active={status === k} onPress={() => setStatus(k)} />)}</View><OptionPicker label="Region" value={region} options={['all','UK','Europe','Africa','North America','South America','Asia','Oceania'].map(x=>[x,x==='all'?'All':x])} onChange={setRegion}/><OptionPicker label="Month" value={month} options={monthOptions} onChange={setMonth}/><OptionPicker label="Sort" value={sort} options={[["newest","Newest"],["oldest","Oldest"],["name","Name"]]} onChange={setSort}/><Pressable onPress={onJourney} accessibilityRole="button"><Text style={styles.link}>＋ Add a multi-stop journey</Text></Pressable><Text style={styles.section}>Destination                         Total</Text>{rows.length ? rows.map(t => <TripRow key={`${t.id}`} trip={t} data={data} onPress={() => onOpen('trips', t)} />) : <Notice>No trips match these filters.</Notice>}</>;
 }
 function Bars({
   rows,
@@ -122,7 +125,7 @@ export function StatsScreen({
   return <><Heading title="Statistics" subtitle="Your travel, in numbers" /><YearPicker year={year} setYear={y => {
       setYear(y);
       setMonth('all');
-    }} data={data} /><View style={styles.chips}><Chip title={`Month: ${month === 'all' ? 'All' : month}`} onPress={() => setMonth(month === 'all' ? 1 : month === 12 ? 'all' : month + 1)} /></View><View style={styles.statGrid}>{[['Total spend', money(s.spend)], ['Days away', s.days], ['Trip records', s.rows.length], ['Flights', s.flights], ['Leave days', s.leave]].map(([label, v]) => <View style={styles.stat} key={label}><Text style={styles.statNum}>{v}</Text><Text style={styles.statLabel}>{label}</Text></View>)}</View><Text style={styles.section}>Highlights</Text>{[['Current', current], ['Next', next], ['Latest', recent]].map(([label, t]) => <Pressable key={label} style={styles.detail} onPress={() => t && onOpen('trips', t)}><Text style={styles.muted}>{label}</Text><Text style={styles.detailValue}>{t ? `${t.name} · ${shortDate(t.start)}` : 'None recorded'}</Text></Pressable>)}{next && <Text style={styles.tiny}>Next trip in {Math.max(0, Math.ceil((new Date(`${next.start}T12:00:00`) - new Date()) / 86400000))} days</Text>}<Text style={styles.section}>{year === 'all' ? 'Yearly' : 'Monthly'} breakdown</Text><View style={styles.chips}>{[['total', 'Spend'], ['days', 'Days away'], ['flights', 'Flights'], ['leave', 'Leave']].map(([k, v]) => <Chip key={k} title={v} active={metric === k} onPress={() => setMetric(k)} />)}</View><Bars rows={s.rows} year={year} metric={metric} /><Text style={styles.section}>Cost split</Text><View style={{
+    }} data={data} /><OptionPicker label="Month" value={month} options={monthOptions} onChange={setMonth}/><View style={styles.statGrid}>{[['Total spend', money(s.spend)], ['Days away', s.days], ['Trip records', s.rows.length], ['Flights', s.flights], ['Leave days', s.leave]].map(([label, v]) => <View style={styles.stat} key={label}><Text style={styles.statNum}>{v}</Text><Text style={styles.statLabel}>{label}</Text></View>)}</View><Text style={styles.section}>Highlights</Text>{[['Current', current], ['Next', next], ['Latest', recent]].map(([label, t]) => <Pressable key={label} style={styles.detail} onPress={() => t && onOpen('trips', t)}><Text style={styles.muted}>{label}</Text><Text style={styles.detailValue}>{t ? `${t.name} · ${shortDate(t.start)}` : 'None recorded'}</Text></Pressable>)}{next && <Text style={styles.tiny}>Next trip in {Math.max(0, Math.ceil((new Date(`${next.start}T12:00:00`) - new Date()) / 86400000))} days</Text>}<Text style={styles.section}>{year === 'all' ? 'Yearly' : 'Monthly'} breakdown</Text><View style={styles.chips}>{[['total', 'Spend'], ['days', 'Days away'], ['flights', 'Flights'], ['leave', 'Leave']].map(([k, v]) => <Chip key={k} title={v} active={metric === k} onPress={() => setMetric(k)} />)}</View><Bars rows={s.rows} year={year} metric={metric} /><Text style={styles.section}>Cost split</Text><View style={{
       height: 12,
       flexDirection: 'row',
       backgroundColor: colors.panel
