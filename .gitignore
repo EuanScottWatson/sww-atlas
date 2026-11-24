@@ -42,3 +42,8 @@ yarn-error.*
 
 # Local unsigned iPhone release artifacts
 /releases/
+
+# Private server records, backups and import snapshots
+/website/data/
+/website/import/
+/website/__pycache__/

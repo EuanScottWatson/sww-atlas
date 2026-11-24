@@ -1,9 +1,14 @@
 # The SWW Atlas
 
-A native iPhone travel journal for the existing Holiday Tracker server. Trips are stored on that server and are shared with its website. The app needs a connection to load and save trips; it does not queue changes offline.
+A personal travel tracker comprising a native Expo iPhone app at the repository root and the existing Python website and server in `website/`. Both use the same server records. See [website/README.md](website/README.md) for the deployment and excluded private data.
 
-The default server is `http://192.168.32.48:7780`; change it in Settings for Tailscale or another private address. The existing server has no authentication and uses HTTP. Keep it on a trusted private network; do not expose it publicly.
+The app includes a trips register, annual and all-time statistics, country flags and a map, and a calendar for trips and individual events. It uses pounds and UK dates. It connects automatically to the existing LAN or Tailscale server; saving requires a connection. The server has no login and must remain on a trusted private network. The app does not upload photos.
 
-## Development and iPhone build
+## Development
 
-Run `npm ci` and `npx expo export --platform ios`. The GitHub Actions workflow builds an unsigned IPA on a Mac runner. Download the artifact and sign/install it with iLoader. Device functionality must be checked on an iPhone. This is a new app identity (`uk.sww.atlas`), separate from Fish On.
+- `npm ci`
+- `node tests/domain.cjs`
+- `cd website && python3 -m unittest -q test_isolated.py`
+- `npx expo export --platform ios`
+
+The GitHub Actions workflow builds an unsigned IPA, which needs signing in iLoader. The app identifier is `uk.sww.atlas`; preserve it when updating an existing installation. A successful build does not replace checking the app on an iPhone.
