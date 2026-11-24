@@ -122,6 +122,9 @@ class AtlasAPITests(unittest.TestCase):
         self.assertEqual(len(data["trips"]), 3)
         self.request("/api/delete", {"kind": "events", "id": event["id"]})
         self.assertEqual(self.request("/api/data")["events"], [])
+        annual = {"total": 123.45, "leave_left": 4, "notes": "Preserved note"}
+        self.request("/api/summary", {"year": 2026, "values": annual})
+        self.assertEqual(self.request("/api/data")["summaries"]["2026"], annual)
 
 
 if __name__ == "__main__":

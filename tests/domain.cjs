@@ -2,6 +2,9 @@ const assert = require('node:assert/strict');
 const {
   statistics,
   dayEntries,
+  eventsDuringTrip,
+  hasMappedPlace,
+  crossYearAllocations,
   flag,
   sharedField,
   calendarRange,
@@ -87,6 +90,15 @@ assert.equal(sharedField({
   group: 'journey-1',
   total: 50
 }, 'total', []), false);
-console.log('domain tests passed');
 
 assert.equal(journeyCount([{id:1,name:'A',start:'2025-01-01',end:'2025-01-02',group:'j'}, {id:2,name:'A',start:'2025-01-01',end:'2025-01-02',group:'j'}, {id:3,name:'B',start:'2025-01-03',end:'2025-01-04',group:'j'}]), 1);
+
+assert.deepEqual(eventsDuringTrip(data, trips[2]).map(event => event.name), []);
+assert.deepEqual(eventsDuringTrip(data, trips[0]).map(event => event.name), ['Concert']);
+assert.equal(hasMappedPlace(data, trips[0]), true);
+assert.equal(hasMappedPlace(data, {...trips[0], lat: null, lon: null}), false);
+assert.equal(hasMappedPlace(data, {...trips[0], pins: [{lat: 91, lon: 1}]}), false);
+assert.equal(crossYearAllocations(data, trips[0]).length, 2);
+assert.equal(crossYearAllocations(data, trips[2]).length, 0);
+
+console.log('domain tests passed');

@@ -2,7 +2,7 @@
 
 A personal travel tracker comprising a native Expo iPhone app at the repository root and the existing Python website and server in `website/`. Both use the same server records. See [website/README.md](website/README.md) for the deployment and excluded private data.
 
-The app includes a trips register, annual and all-time statistics, country flags and a map, and a calendar for trips and individual events. It uses pounds and UK dates. It connects automatically to the existing LAN or Tailscale server; saving requires a connection. The server has no login and must remain on a trusted private network. The app does not upload photos.
+The app includes a trips register, annual and all-time statistics, country flags and a map, and a calendar for trips and individual events. Trip details show calendar events recorded during the trip and cross-year worksheet allocations; the map retains trips without coordinates. Original annual worksheet figures can be edited independently of live statistics. It uses pounds and UK dates. It connects automatically to the existing LAN or Tailscale server; saving requires a connection. The server has no login and must remain on a trusted private network. The app does not upload photos.
 
 ## Development
 

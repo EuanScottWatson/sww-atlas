@@ -6,7 +6,10 @@ import { Button, Chip, Detail, Heading, Notice, dateRange, money, shortDate, tod
 const {
   allocationMonth,
   calendarRange,
+  crossYearAllocations,
   dayEntries,
+  eventsDuringTrip,
+  hasMappedPlace,
   flag,
   journeyCount,
   placeFor,
@@ -113,7 +116,8 @@ export function StatsScreen({
   data,
   year,
   setYear,
-  onOpen
+  onOpen,
+  onEditAnnual
 }) {
   const [metric, setMetric] = useState('total'),
     [month, setMonth] = useState('all');
@@ -144,19 +148,22 @@ export function StatsScreen({
     }, (_, i) => i + 1) : [month]).map(x => {
       const a = statistics(data.trips, year === 'all' ? x : year, year === 'all' ? 'all' : x);
       return <View key={x} style={styles.detail}><View><Text style={styles.body}>{year === 'all' ? x : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][x - 1]}</Text><Text style={styles.tiny}>{a.days} days · {a.flights} flights · {a.leave} leave</Text><Text style={styles.tiny}>Travel {money(a.travel)} · stay {money(a.accommodation)}</Text></View><Text style={styles.detailValue}>{money(a.spend)}</Text></View>;
-    })}{year !== 'all' && summaries[year] && <><Text style={styles.section}>Original worksheet figures</Text><Notice>These preserved reference figures are separate from live calculations.</Notice>{[['Travel', money(summaries[year].travel)], ['Accommodation', money(summaries[year].accommodation)], ['Spend', money(summaries[year].total)], ['Days', summaries[year].days], ['Flights', summaries[year].flights], ['Leave allowance', summaries[year].leave_total], ['Leave remaining', summaries[year].leave_left], ['Leave bought', summaries[year].bought], ['Other leave usage', summaries[year].other_usage], ['Percent away', summaries[year].percent], ['Paid back', money(summaries[year].paid_back)]].map(([label, v]) => <Detail key={label} label={label} value={v} />)}{summaries[year].notes ? <Text style={styles.muted}>{summaries[year].notes}</Text> : null}</>}{s.rows.some(t => t.review) && <><Text style={styles.section}>Import notes</Text><Text style={styles.muted}>Entries marked for review retain their original notes.</Text>{s.rows.filter(t => t.review).map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips',t)} />)}</>}</>;
+    })}{year !== 'all' && summaries[year] && <><Text style={styles.section}>Original worksheet figures</Text><Button title="Edit annual figures" kind="secondary" onPress={onEditAnnual} /><View style={styles.spacer} /><Notice>These preserved reference figures are separate from live calculations.</Notice>{[['Travel', money(summaries[year].travel)], ['Accommodation', money(summaries[year].accommodation)], ['Spend', money(summaries[year].total)], ['Days', summaries[year].days], ['Flights', summaries[year].flights], ['Leave allowance', summaries[year].leave_total], ['Leave remaining', summaries[year].leave_left], ['Leave bought', summaries[year].bought], ['Other leave usage', summaries[year].other_usage], ['Percent away', summaries[year].percent], ['Paid back', money(summaries[year].paid_back)]].map(([label, v]) => <Detail key={label} label={label} value={v} />)}{summaries[year].notes ? <Text style={styles.muted}>{summaries[year].notes}</Text> : null}</>}{s.rows.some(t => t.review) && <><Text style={styles.section}>Import notes</Text><Text style={styles.muted}>Entries marked for review retain their original notes.</Text>{s.rows.filter(t => t.review).map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips',t)} />)}</>}</>;
 }
 const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 export function CalendarScreen({
   data,
   onOpen,
-  onAddEvent
+  onAddEvent,
+  calendar,
+  setCalendar
 }) {
-  const now = new Date(),
-    [cursor, setCursor] = useState(new Date(now.getFullYear(), now.getMonth(), 1)),
-    [mode, setMode] = useState('month'),
-    [selected, setSelected] = useState(todayISO()),
-    [query, setQuery] = useState('');
+  const {cursor, mode, selected, query} = calendar;
+  const change = (key, value) => setCalendar(current => ({...current, [key]:value}));
+  const setCursor = value => change('cursor',value);
+  const setMode = value => change('mode',value);
+  const setSelected = value => change('selected',value);
+  const setQuery = value => change('query',value);
   const y = cursor.getFullYear(),
     m = cursor.getMonth(),
     days = new Date(y, m + 1, 0).getDate(),
@@ -164,10 +171,10 @@ export function CalendarScreen({
   const first = iso(y, m, 1),
     last = iso(y, m, days);
   const entries = dayEntries(data, selected);
-  const searchResults = query.trim() ? (data.events || []).filter(e => `${e.name} ${e.notes || ''}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => (b.start || '').localeCompare(a.start || '')) : [];
+  const searchResults = query.trim() ? [...(data.events || []).map(record => ({kind:'events',record})), ...uniqueVisits(data.trips || []).map(record => ({kind:'trips',record}))].filter(({record}) => `${record.name} ${record.notes || ''}`.toLowerCase().includes(query.trim().toLowerCase())).sort((a, b) => (b.record.start || '').localeCompare(a.record.start || '')) : [];
   return <><Heading title="Calendar" subtitle="Trips and personal events" action={<Button title="＋ Event" onPress={() => onAddEvent(selected)} />} /><TextInput style={[styles.input, {
       marginBottom: 12
-    }]} placeholder="Search personal events" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} accessibilityLabel="Search personal events" />{query.trim() ? <>{searchResults.length ? searchResults.map(e => <Pressable key={e.id} onPress={() => onOpen('events', e)} style={styles.row}><View style={styles.rowMain}><Text style={styles.rowTitle}>{e.name}</Text><Text style={styles.tiny}>{dateRange(e)}</Text></View><Text style={styles.link}>›</Text></Pressable>) : <Notice>No events found.</Notice>}</> : <><View style={styles.chips}>{[['month', 'Month'], ['agenda', 'Agenda'], ['year', 'Year']].map(([k, v]) => <Chip key={k} title={v} active={mode === k} onPress={() => setMode(k)} />)}</View><View style={styles.headingRow}><Button title="‹" kind="secondary" onPress={() => {
+    }]} placeholder="Search events and trips" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} accessibilityLabel="Search events and trips" />{query.trim() ? <>{searchResults.length ? searchResults.map(({kind,record}) => <Pressable key={`${kind}${record.id}`} onPress={() => onOpen(kind, record)} style={styles.row}><View style={styles.rowMain}><Text style={styles.rowTitle}>{record.name}</Text><Text style={styles.tiny}>{kind === 'trips' ? 'Trip' : 'Personal event'} · {dateRange(record)}</Text></View><Text style={styles.link}>›</Text></Pressable>) : <Notice>No matching entries found.</Notice>}</> : <><View style={styles.chips}>{[['month', 'Month'], ['agenda', 'Agenda'], ['year', 'Year']].map(([k, v]) => <Chip key={k} title={v} active={mode === k} onPress={() => setMode(k)} />)}</View><View style={styles.headingRow}><Button title="‹" kind="secondary" onPress={() => {
           const d = new Date(y, mode === 'year' ? m - 12 : m - 1, 1);
           setCursor(d);
           setSelected(iso(d.getFullYear(), d.getMonth(), 1));
@@ -254,7 +261,7 @@ export function MapScreen({
         lon: p.lon
       }];
     for (const pin of pins) {
-      if (pin.lat == null || pin.lon == null || !Number.isFinite(Number(pin.lat)) || !Number.isFinite(Number(pin.lon))) continue;
+      if (pin.lat == null || pin.lon == null || !Number.isFinite(Number(pin.lat)) || !Number.isFinite(Number(pin.lon)) || Math.abs(Number(pin.lat)) > 90 || Math.abs(Number(pin.lon)) > 180) continue;
       const key = `${Number(pin.lat).toFixed(4)},${Number(pin.lon).toFixed(4)}`;
       if (!groups.has(key)) groups.set(key, {
         ...pin,
@@ -264,6 +271,7 @@ export function MapScreen({
       groups.get(key).trips.push(t);
     }
   }
+  const unmapped = uniqueVisits(trips.filter(t => !hasMappedPlace(data,t) && (!country || tripCountries(data,t).includes(country)) && `${t.name} ${tripCountries(data,t).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase())));
   const pins = [...groups.values()].filter(p => (!country || p.trips.some(t => tripCountries(data, t).includes(country))) && `${p.name} ${p.country}`.toLowerCase().includes(query.toLowerCase()));
   const clusterSize = region.longitudeDelta > 20 ? Math.max(0.1, region.longitudeDelta / 25) : 0;
   const clusters = new Map();
@@ -307,7 +315,7 @@ export function MapScreen({
             }, 350);
           } else openPlace(p);
         }} />;
-      })}</MapView><Text style={styles.tiny}>Tap a pin for visit history. Locations are approximate. Map tiles require a connection.</Text>{selected && <><Text style={styles.section}>{selected.name}</Text><Text style={styles.muted}>{selected.country}</Text>{overview?.extract ? <Text style={styles.body}>{overview.extract}</Text> : overview ? <Text style={styles.muted}>Place overview unavailable.</Text> : <Text style={styles.muted}>Loading place overview…</Text>}{overview?.url && <Pressable accessibilityRole="link" onPress={() => Linking.openURL(overview.url).catch(() => Alert.alert('Unable to open link', 'Please try again.'))}><Text style={styles.link}>Open Wikipedia ↗</Text></Pressable>}<Text style={styles.section}>Your visits</Text>{uniqueVisits(selected.trips).map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips', t)} />)}</>}<Text style={styles.section}>Countries · {countries.length}</Text><View style={styles.chips}><Chip title="All countries" active={!country} onPress={() => setCountry('')} />{countries.map(c => <Chip key={c} title={`${flag(c)} ${c} (${journeyCount(trips.filter(t => tripCountries(data, t).includes(c)))})`} active={country === c} onPress={() => {
+      })}</MapView><Text style={styles.tiny}>Tap a pin for visit history. Locations are approximate. Map tiles require a connection.</Text>{selected && <><Text style={styles.section}>{selected.name}</Text><Text style={styles.muted}>{selected.country}</Text>{overview?.extract ? <Text style={styles.body}>{overview.extract}</Text> : overview ? <Text style={styles.muted}>Place overview unavailable.</Text> : <Text style={styles.muted}>Loading place overview…</Text>}{overview?.url && <Pressable accessibilityRole="link" onPress={() => Linking.openURL(overview.url).catch(() => Alert.alert('Unable to open link', 'Please try again.'))}><Text style={styles.link}>Open Wikipedia ↗</Text></Pressable>}<Text style={styles.section}>Your visits</Text>{uniqueVisits(selected.trips).map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips', t)} />)}</>}{unmapped.length > 0 && <><Text style={styles.section}>Trips without map pins</Text><Text style={styles.muted}>These destinations have no recorded coordinates.</Text>{unmapped.map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips',t)} />)}</>}<Text style={styles.section}>Countries · {countries.length}</Text><View style={styles.chips}><Chip title="All countries" active={!country} onPress={() => setCountry('')} />{countries.map(c => <Chip key={c} title={`${flag(c)} ${c} (${journeyCount(trips.filter(t => tripCountries(data, t).includes(c)))})`} active={country === c} onPress={() => {
         setCountry(c);
         setSelected(null);
         const coords = [...groups.values()].filter(p => p.trips.some(t => tripCountries(data, t).includes(c))).map(p => ({
@@ -343,6 +351,9 @@ export function RecordDetail({
     seen = new Set(),
     stops = group.filter(t => { const key = JSON.stringify([t.name,t.start,t.end]); if (seen.has(key)) return false; seen.add(key); return true; }),
     shared = ['travel','accommodation','total','flights','days','leave'].filter(k => sharedField(record,k,data.trips || [])),
+    allocations = isTrip ? crossYearAllocations(data,record) : [],
+    relatedEvents = isTrip ? eventsDuringTrip(data,record) : [],
+    relatedTrips = !isTrip && record.start ? dayEntries(data,record.start).filter(item => item.kind === 'trips') : [],
     display = (key, value) => shared.includes(key) ? 'Shared across journey' : value;
-  return <><Heading title={record.name} subtitle={isTrip ? country.join(', ') || 'Trip' : 'Personal event'} action={<Button title="Edit" kind="secondary" onPress={onEdit} />} /><Detail label="Dates" value={dateRange(record)} />{isTrip && <><Detail label="Travel" value={display('travel', money(record.travel))} /><Detail label="Accommodation" value={display('accommodation', money(record.accommodation))} /><Detail label="Recorded total" value={display('total', money(record.total))} /><Detail label="Flights" value={display('flights', record.flights)} /><Detail label="Days recorded" value={display('days', record.days)} /><Detail label="Leave days" value={display('leave', record.leave)} /><Detail label="Allocation year" value={record.year} /><Detail label="Region" value={record.region} />{shared.length > 0 && <Notice>Shared journey fields: {shared.join(', ')}. These figures are recorded once for the journey.</Notice>}{stops.length > 1 && <><Text style={styles.section}>Journey · {record.journey_name || 'Linked stops'}</Text><Text style={styles.muted}>Recorded journey totals: {uniqueCosts(stops).some(t => t.total != null) ? money(uniqueCosts(stops).reduce((n, t) => n + (Number(t.total) || 0), 0)) : 'Not recorded'}</Text>{stops.map(t => <Pressable key={t.id} style={styles.row} onPress={() => onOpen('trips', t)}><View style={styles.rowMain}><Text style={styles.rowTitle}>{t.name}</Text><Text style={styles.tiny}>{dateRange(t)}</Text></View><Text style={styles.link}>›</Text></Pressable>)}</>}{record.review && <><Text style={styles.section}>Needs review</Text><Text style={styles.muted}>This imported entry is marked for review.</Text></>}</>}<Text style={styles.section}>Notes</Text><Text style={styles.body}>{record.notes || 'No notes recorded.'}</Text><View style={styles.spacer} /><Button title={isTrip ? 'Delete trip' : 'Delete event'} kind="danger" onPress={onDelete} /></>;
+  return <><Heading title={record.name} subtitle={isTrip ? country.join(', ') || 'Trip' : 'Personal event'} action={<Button title="Edit" kind="secondary" onPress={onEdit} />} /><Detail label="Dates" value={dateRange(record)} />{isTrip && <><Detail label="Travel" value={display('travel', money(record.travel))} /><Detail label="Accommodation" value={display('accommodation', money(record.accommodation))} /><Detail label="Recorded total" value={display('total', money(record.total))} /><Detail label="Flights" value={display('flights', record.flights)} /><Detail label="Days recorded" value={display('days', record.days)} /><Detail label="Leave days" value={display('leave', record.leave)} /><Detail label="Allocation year" value={record.year} /><Detail label="Region" value={record.region} />{shared.length > 0 && <Notice>Shared journey fields: {shared.join(', ')}. These figures are recorded once for the journey.</Notice>}{stops.length > 1 && <><Text style={styles.section}>Journey · {record.journey_name || 'Linked stops'}</Text><Text style={styles.muted}>Recorded journey totals: {uniqueCosts(stops).some(t => t.total != null) ? money(uniqueCosts(stops).reduce((n, t) => n + (Number(t.total) || 0), 0)) : 'Not recorded'}</Text>{stops.map(t => <Pressable key={t.id} style={styles.row} onPress={() => onOpen('trips', t)}><View style={styles.rowMain}><Text style={styles.rowTitle}>{t.name}</Text><Text style={styles.tiny}>{dateRange(t)}</Text></View><Text style={styles.link}>›</Text></Pressable>)}</>}{allocations.length > 1 && <><Text style={styles.section}>Across worksheet years</Text><Notice>The same trip appears in more than one annual worksheet. Repeated costs count once in all-time totals.</Notice>{allocations.map(row => <View key={row.id} style={styles.detail}><View style={styles.rowMain}><Text style={styles.body}>{row.year}</Text><Text style={styles.tiny}>Days: {row.days ?? '—'} · Leave: {row.leave ?? '—'}</Text><Text style={styles.tiny}>Travel: {money(row.travel)} · Accommodation: {money(row.accommodation)}</Text></View><Text style={styles.detailValue}>{money(row.total)}</Text></View>)}</>}{relatedEvents.length > 0 && <><Text style={styles.section}>Events during these dates</Text><Text style={styles.tiny}>Events recorded in the calendar during this trip.</Text>{relatedEvents.map(event => <Pressable key={event.id} style={styles.row} onPress={() => onOpen('events',event)}><View style={styles.rowMain}><Text style={styles.rowTitle}>{event.name}</Text><Text style={styles.tiny}>{dateRange(event)}</Text></View><Text style={styles.link}>›</Text></Pressable>)}</>}{record.review && <><Text style={styles.section}>Needs review</Text><Text style={styles.muted}>This imported entry is marked for review.</Text></>}</>}<Text style={styles.section}>Notes</Text><Text style={styles.body}>{record.notes || 'No notes recorded.'}</Text>{relatedTrips.length > 0 && <><Text style={styles.section}>Trips on this day</Text>{relatedTrips.map(({record:trip}) => <TripRow key={trip.id} trip={trip} data={data} onPress={() => onOpen('trips',trip)} />)}</>}<View style={styles.spacer} /><Button title={isTrip ? 'Delete trip' : 'Delete event'} kind="danger" onPress={onDelete} /></>;
 }

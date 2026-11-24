@@ -224,3 +224,41 @@ export function JourneyEditor({
   }
   return <><Heading title="New journey" subtitle="Add at least two stops; shared costs are recorded once." /><Field label="Journey name" value={name} onChangeText={setName} /><Field label="Journey travel (£)" numeric value={travel} onChangeText={setTravel} /><View style={styles.inline}><View style={styles.half}><Field label="Flights" numeric value={flights} onChangeText={setFlights} /></View><View style={styles.half}><Field label="Leave days" numeric value={leave} onChangeText={setLeave} /></View></View>{stops.map((s, i) => <View key={i}><Text style={styles.section}>Stop {i + 1}</Text><Field label="Destination" value={s.name} onChangeText={v => change(i, 'name', v)} /><Field label="Country" value={s.country} onChangeText={v => change(i, 'country', v)} /><View style={styles.inline}><View style={styles.half}><Field label="Start (DD/MM/YYYY)" value={s.start} onChangeText={v => change(i, 'start', v)} /></View><View style={styles.half}><Field label="End (DD/MM/YYYY)" value={s.end} onChangeText={v => change(i, 'end', v)} /></View></View><Field label="Accommodation (£)" numeric value={s.accommodation} onChangeText={v => change(i, 'accommodation', v)} /><Text style={styles.label}>Region</Text><View style={styles.chips}>{regions.map(r => <Chip key={r} title={r} active={s.region === r} onPress={() => change(i, 'region', r)} />)}</View>{stops.length > 2 && <Button title="Remove stop" kind="secondary" onPress={() => setStops(stops.filter((_, index) => index !== i))} />}</View>)}<View style={styles.spacer} /><Button title="＋ Add stop" kind="secondary" onPress={() => setStops([...stops, blankStop()])} /><Text style={styles.tiny}>You can add map places to each stop after saving.</Text>{!!error && <Text style={styles.error}>{error}</Text>}<View style={styles.spacer} /><Button title={saving ? 'Saving…' : 'Save journey'} disabled={saving} onPress={submit} /><View style={styles.spacer} /><Button title="Cancel" kind="secondary" onPress={onCancel} /></>;
 }
+
+const annualFields = [
+  ['travel', 'Travel (£)'],
+  ['accommodation', 'Accommodation (£)'],
+  ['total', 'Total (£)'],
+  ['days', 'Days'],
+  ['flights', 'Flights'],
+  ['percent', 'Percent away'],
+  ['leave_total', 'Leave allowance / total'],
+  ['other_usage', 'Other leave usage'],
+  ['leave_left', 'Leave remaining'],
+  ['bought', 'Leave bought'],
+  ['paid_back', 'Paid back (£)']
+];
+
+export function AnnualEditor({ year, values, onSave, onCancel, saving }) {
+  const [draft, setDraft] = useState(() => ({ ...values }));
+  const [error, setError] = useState('');
+  function submit() {
+    const result = { ...values };
+    for (const [key, label] of annualFields) {
+      const input = draft[key];
+      if (input == null || String(input).trim() === '') {
+        result[key] = null;
+        continue;
+      }
+      const number = Number(input);
+      if (!Number.isFinite(number)) {
+        setError(`Enter a valid number for ${label}.`);
+        return;
+      }
+      result[key] = number;
+    }
+    setError('');
+    onSave(year, result);
+  }
+  return <><Heading title="Annual figures" subtitle={`${year} worksheet reference`} /><Notice>These are your original worksheet figures. They do not recalculate from trips.</Notice>{annualFields.map(([key, label]) => <Field key={key} label={label} numeric value={draft[key]} onChangeText={value => setDraft(current => ({ ...current, [key]: value }))} />)}{!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}<View style={styles.spacer} /><Button title={saving ? 'Saving…' : 'Save figures'} disabled={saving} onPress={submit} /><View style={styles.spacer} /><Button title="Cancel" kind="secondary" onPress={onCancel} /></>;
+}

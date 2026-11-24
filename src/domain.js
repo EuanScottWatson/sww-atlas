@@ -128,6 +128,22 @@ function calendarRange(data, trip) {
   const match = (data['calendar-overrides'] || []).find(([y, n, s]) => y === trip.year && n === trip.name && s === trip.start);
   return match ? [match[3], match[4]] : [trip.start, trip.end];
 }
+function eventsDuringTrip(data, trip) {
+  const [start, end] = calendarRange(data, trip);
+  if (!start || !end || end < start) return [];
+  return (data.events || []).filter(event => event.start && event.end && event.start <= end && event.end >= start)
+    .slice().sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
+}
+function hasMappedPlace(data, trip) {
+  const place = placeFor(data, trip);
+  const pins = place.pins || [{lat: place.lat, lon: place.lon}];
+  return pins.some(pin => pin.lat != null && pin.lon != null && Number.isFinite(Number(pin.lat)) && Number.isFinite(Number(pin.lon)) && Math.abs(Number(pin.lat)) <= 90 && Math.abs(Number(pin.lon)) <= 180);
+}
+function crossYearAllocations(data, trip) {
+  if (!trip.start || !trip.end) return [];
+  const matches = (data.trips || []).filter(row => row.name === trip.name && row.start === trip.start && row.end === trip.end && row.year != null);
+  return new Set(matches.map(row => row.year)).size > 1 ? matches.slice().sort((a, b) => a.year - b.year) : [];
+}
 function dayEntries(data, date) {
   const seen = new Set();
   const trips = (data.trips || []).filter(t => {
@@ -151,6 +167,9 @@ module.exports = {
   calendarRange,
   dateCount,
   dayEntries,
+  eventsDuringTrip,
+  hasMappedPlace,
+  crossYearAllocations,
   flag,
   placeFor,
   scopedTrips,

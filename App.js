@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { colors, styles } from './src/theme';
-import { Button } from './src/ui';
+import { Button, todayISO } from './src/ui';
 import { CalendarScreen, MapScreen, RecordDetail, StatsScreen, TripsScreen } from './src/screens';
-import { JourneyEditor, RecordEditor } from './src/editor';
+import { AnnualEditor, JourneyEditor, RecordEditor } from './src/editor';
 const SERVERS = ['http://192.168.32.48:7780', 'http://100.94.227.14:7780'];
 const TABS = [['Trips', '☷'], ['Statistics', '▥'], ['Map', '◇'], ['Calendar', '▦']];
 async function request(base, path, body, timeout = 12000) {
@@ -41,7 +41,9 @@ export default function App() {
     [year, setYear] = useState('all'),
     [page, setPage] = useState(null);
   const [selected, setSelected] = useState(null),
-    [kind, setKind] = useState(null);
+    [kind, setKind] = useState(null),
+    [history, setHistory] = useState([]);
+  const [calendar, setCalendar] = useState(() => { const now = new Date(); return { cursor: new Date(now.getFullYear(),now.getMonth(),1), mode: 'month', selected: todayISO(), query: '' }; });
   const scroll = useRef(null);
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,13 +76,15 @@ export default function App() {
     animated: false
   });
   const open = (recordKind, record) => {
+    if (page === 'detail' && selected && (kind !== recordKind || selected.id !== record.id)) setHistory(current => [...current, {kind, record:selected}]);
+    else if (page !== 'detail') setHistory([]);
     setKind(recordKind);
     setSelected(record);
     setPage('detail');
     top();
   };
   const leaveDraft = callback => {
-    if (page === 'edit' || page === 'journey') Alert.alert('Discard changes?', 'Your unsaved changes will be lost.', [{
+    if (page === 'edit' || page === 'journey' || page === 'annual') Alert.alert('Discard changes?', 'Your unsaved changes will be lost.', [{
       text: 'Keep editing',
       style: 'cancel'
     }, {
@@ -93,14 +97,21 @@ export default function App() {
     setTab(next);
     setPage(null);
     setSelected(null);
+    setHistory([]);
     top();
   });
   const back = () => leaveDraft(() => {
     if (page === 'edit' && selected) {
       setPage('detail');
+    } else if (page === 'detail' && history.length) {
+      const previous = history[history.length - 1];
+      setHistory(history.slice(0, -1));
+      setKind(previous.kind);
+      setSelected(previous.record);
     } else {
       setPage(null);
       setSelected(null);
+      setHistory([]);
     }
     top();
   });
@@ -119,6 +130,19 @@ export default function App() {
       await load();
     } catch (e) {
       Alert.alert('Could not confirm save', `${e.message}\n\nIf the connection was interrupted, check the existing records before trying again.`);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const saveAnnual = async (summaryYear, values) => {
+    setSaving(true);
+    try {
+      await api('/api/summary', { year: summaryYear, values });
+      setPage(null);
+      top();
+      await load();
+    } catch (e) {
+      Alert.alert('Could not confirm save', `${e.message}\n\nCheck the existing figures before trying again.`);
     } finally {
       setSaving(false);
     }
@@ -185,7 +209,7 @@ export default function App() {
  {data && (page === 'detail' && selected ? <RecordDetail kind={kind} record={selected} data={data} onOpen={open} onEdit={() => {
           setPage('edit');
           top();
-        }} onDelete={remove} /> : page === 'edit' ? <RecordEditor key={`${kind}-${selected?.id || initialDate || 'new'}`} kind={kind} record={selected || undefined} initialDate={initialDate} data={data} api={api} saving={saving} onSave={save} onCancel={back} /> : page === 'journey' ? <JourneyEditor saving={saving} onSave={saveJourney} onCancel={back} /> : tab === 'Trips' ? <TripsScreen data={data} year={year} setYear={setYear} onOpen={open} onAdd={() => {
+        }} onDelete={remove} /> : page === 'edit' ? <RecordEditor key={`${kind}-${selected?.id || initialDate || 'new'}`} kind={kind} record={selected || undefined} initialDate={initialDate} data={data} api={api} saving={saving} onSave={save} onCancel={back} /> : page === 'annual' ? <AnnualEditor year={year} values={data.summaries[year]} saving={saving} onSave={saveAnnual} onCancel={back} /> : page === 'journey' ? <JourneyEditor saving={saving} onSave={saveJourney} onCancel={back} /> : tab === 'Trips' ? <TripsScreen data={data} year={year} setYear={setYear} onOpen={open} onAdd={() => {
           setKind('trips');
           setSelected(null);
           setInitialDate(null);
@@ -194,7 +218,7 @@ export default function App() {
         }} onJourney={() => {
           setPage('journey');
           top();
-        }} /> : tab === 'Statistics' ? <StatsScreen data={data} year={year} setYear={setYear} onOpen={open} /> : tab === 'Map' ? <MapScreen data={data} onOpen={open} api={api} /> : <CalendarScreen data={data} onOpen={open} onAddEvent={addEvent} />)}
+        }} /> : tab === 'Statistics' ? <StatsScreen data={data} year={year} setYear={setYear} onOpen={open} onEditAnnual={() => { setPage('annual'); top(); }} /> : tab === 'Map' ? <MapScreen data={data} onOpen={open} api={api} /> : <CalendarScreen data={data} onOpen={open} onAddEvent={addEvent} calendar={calendar} setCalendar={setCalendar} />)}
  </ScrollView>}<View style={styles.nav}>{TABS.map(([label, icon]) => <Pressable key={label} accessibilityRole="tab" accessibilityState={{
           selected: tab === label
         }} style={styles.tab} onPress={() => navigate(label)}><Text style={[styles.tabIcon, tab === label && styles.tabActive]}>{icon}</Text><Text style={[styles.tabText, tab === label && styles.tabActive]}>{label}</Text></Pressable>)}</View></KeyboardAvoidingView></SafeAreaView>;
