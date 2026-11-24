@@ -70,6 +70,7 @@ assert.deepEqual(calendarRange(data, {
 }), ['2026-01-02', '2026-01-03']);
 assert.equal(placeFor(data, trips[0]).country, 'Japan');
 assert.equal(flag('Japan'), '🇯🇵');
+assert.equal(flag('United States of America'), '🇺🇸');
 assert.equal(flag('unknown'), '🌐');
 assert.equal(sharedField({
   group: '2023-world'

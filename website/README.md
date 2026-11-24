@@ -1,6 +1,6 @@
 # Atlas website and server
 
-This is the existing Holiday Tracker server and website source. The running deployment remains in `../holiday-tracker` outside this repository; copying this source here does not change that deployment.
+This is the existing Holiday Tracker server and website source. The running deployment remains in `../../holiday-tracker` outside this repository; copying this source here does not change that deployment.
 
 The SQLite database, photos, backups and private import snapshots are intentionally excluded from Git. The server currently requires its `import/` directory even with an existing database because it reads the curated `places.json` file on each data request. To run a local copy, supply the corresponding private `import/` directory and set `HOLIDAY_DATA_DIR` to an isolated directory; do not point test runs at production data. `HOLIDAY_PHOTOS_DIR` can point to the source photographs. The existing deployment's Compose configuration and persistent paths must be reviewed before any migration.
 

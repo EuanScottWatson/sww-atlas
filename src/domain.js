@@ -5,6 +5,7 @@ const countries = require('./countries.json');
 const countryCodes = Object.fromEntries(countries.map(country => [country.name.toLowerCase(), country.code]));
 const countryAliases = {
   'united states': 'US',
+  'united states of america': 'US',
   'usa': 'US',
   'united kingdom': 'GB',
   'hong kong': 'HK',
