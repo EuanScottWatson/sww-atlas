@@ -1,0 +1,35 @@
+name: Build unsigned iPhone app
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: ./node_modules/.bin/expo prebuild --platform ios --no-install
+      - run: pod install --project-directory=ios
+      - name: Build unsigned app
+        run: |
+          xcodebuild -workspace ios/TheSWWAtlas.xcworkspace -scheme TheSWWAtlas \
+            -configuration Release -sdk iphoneos -derivedDataPath "$RUNNER_TEMP/atlas-build" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$RUNNER_TEMP/atlas-build/Build/Products/Release-iphoneos/TheSWWAtlas.app" "$RUNNER_TEMP/package/Payload/"
+          cd "$RUNNER_TEMP/package"
+          zip -qry SWW-Atlas-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sww-atlas-unsigned-ios
+          path: ${{ runner.temp }}/package/SWW-Atlas-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7

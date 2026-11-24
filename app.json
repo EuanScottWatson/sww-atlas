@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "The SWW Atlas",
+    "slug": "sww-atlas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uk.sww.atlas",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "The SWW Atlas connects to your home server to store your trips.",
+        "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true, "NSAllowsArbitraryLoads": true }
+      }
+    }
+  }
+}
