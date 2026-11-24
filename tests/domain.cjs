@@ -5,7 +5,8 @@ const {
   flag,
   sharedField,
   calendarRange,
-  placeFor
+  placeFor,
+  journeyCount
 } = require('../src/domain');
 const trips = [{
   id: 1,
@@ -87,3 +88,5 @@ assert.equal(sharedField({
   total: 50
 }, 'total', []), false);
 console.log('domain tests passed');
+
+assert.equal(journeyCount([{id:1,name:'A',start:'2025-01-01',end:'2025-01-02',group:'j'}, {id:2,name:'A',start:'2025-01-01',end:'2025-01-02',group:'j'}, {id:3,name:'B',start:'2025-01-03',end:'2025-01-04',group:'j'}]), 1);

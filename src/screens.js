@@ -8,12 +8,14 @@ const {
   calendarRange,
   dayEntries,
   flag,
+  journeyCount,
   placeFor,
   scopedTrips,
   sharedField,
   statistics,
   tripCountries,
-  uniqueCosts
+  uniqueCosts,
+  uniqueVisits
 } = require('./domain');
 export function YearPicker({
   year,
@@ -305,7 +307,7 @@ export function MapScreen({
             }, 350);
           } else openPlace(p);
         }} />;
-      })}</MapView><Text style={styles.tiny}>Tap a pin for visit history. Locations are approximate. Map tiles require a connection.</Text>{selected && <><Text style={styles.section}>{selected.name}</Text><Text style={styles.muted}>{selected.country}</Text>{overview?.extract ? <Text style={styles.body}>{overview.extract}</Text> : overview ? <Text style={styles.muted}>Place overview unavailable.</Text> : <Text style={styles.muted}>Loading place overview…</Text>}{overview?.url && <Pressable accessibilityRole="link" onPress={() => Linking.openURL(overview.url).catch(() => Alert.alert('Unable to open link', 'Please try again.'))}><Text style={styles.link}>Open Wikipedia ↗</Text></Pressable>}<Text style={styles.section}>Your visits</Text>{selected.trips.map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips', t)} />)}</>}<Text style={styles.section}>Countries · {countries.length}</Text><View style={styles.chips}><Chip title="All countries" active={!country} onPress={() => setCountry('')} />{countries.map(c => <Chip key={c} title={`${flag(c)} ${c} (${trips.filter(t => tripCountries(data, t).includes(c)).length})`} active={country === c} onPress={() => {
+      })}</MapView><Text style={styles.tiny}>Tap a pin for visit history. Locations are approximate. Map tiles require a connection.</Text>{selected && <><Text style={styles.section}>{selected.name}</Text><Text style={styles.muted}>{selected.country}</Text>{overview?.extract ? <Text style={styles.body}>{overview.extract}</Text> : overview ? <Text style={styles.muted}>Place overview unavailable.</Text> : <Text style={styles.muted}>Loading place overview…</Text>}{overview?.url && <Pressable accessibilityRole="link" onPress={() => Linking.openURL(overview.url).catch(() => Alert.alert('Unable to open link', 'Please try again.'))}><Text style={styles.link}>Open Wikipedia ↗</Text></Pressable>}<Text style={styles.section}>Your visits</Text>{uniqueVisits(selected.trips).map(t => <TripRow key={t.id} trip={t} data={data} onPress={() => onOpen('trips', t)} />)}</>}<Text style={styles.section}>Countries · {countries.length}</Text><View style={styles.chips}><Chip title="All countries" active={!country} onPress={() => setCountry('')} />{countries.map(c => <Chip key={c} title={`${flag(c)} ${c} (${journeyCount(trips.filter(t => tripCountries(data, t).includes(c)))})`} active={country === c} onPress={() => {
         setCountry(c);
         setSelected(null);
         const coords = [...groups.values()].filter(p => p.trips.some(t => tripCountries(data, t).includes(c))).map(p => ({

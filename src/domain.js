@@ -47,6 +47,18 @@ function sharedField(trip, key, trips) {
 const value = n => Number(n) || 0;
 const sum = (rows, key) => rows.reduce((n, row) => n + value(row[key]), 0);
 const allocationMonth = trip => trip.start ? trip.start.slice(0, 4) == trip.year ? Number(trip.start.slice(5, 7)) : 1 : 0;
+function uniqueVisits(rows) {
+  const seen = new Set();
+  return rows.filter(t => {
+    const key = [t.name,t.start,t.end].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function journeyCount(rows) {
+  return new Set(uniqueVisits(rows).map(t => t.group ? `journey:${t.group}` : `trip:${t.id}`)).size;
+}
 function uniqueCosts(rows) {
   const seen = new Set();
   return rows.filter(t => {
@@ -145,5 +157,7 @@ module.exports = {
   statistics,
   sum,
   tripCountries,
-  uniqueCosts
+  uniqueCosts,
+  uniqueVisits,
+  journeyCount
 };
