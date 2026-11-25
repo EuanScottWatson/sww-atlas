@@ -82,7 +82,7 @@ struct CalendarView:View {
         .sheet(isPresented:$adding) { NavigationStack { RecordEditorView(kind:"events",record:nil,initialDate:selected) } }
     }
     @ViewBuilder private func entry(kind:String,record:Record) -> some View {
-        NavigationLink { RecordDetailView(kind:kind,id:record.id) } label: { VStack(alignment:.leading,spacing:3) { Text(record.name); Text("\(kind == "trips" ? "Trip" : "Personal event") · \(recordDates(record))").font(.caption).foregroundStyle(.secondary) } }
+        NavigationLink { RecordDetailView(kind:kind,id:record.id) } label: { VStack(alignment:.leading,spacing:3) { Text(record.name); Text("\(kind == "trips" ? "Trip" : record.text("kind") == "context" ? "Calendar context" : "Personal event") · \(recordDates(record))").font(.caption).foregroundStyle(.secondary) } }
     }
     private func move(_ amount:Int) { let component:Calendar.Component = mode == "Year" ? .year : .month; if let next=calendar.date(byAdding:component,value:amount,to:startOfMonth) { cursor=next; selected=next } }
 }

@@ -54,4 +54,9 @@ final class AtlasCoreTests: XCTestCase {
         XCTAssertEqual(AtlasCalculations.days([Record(["start":.string(""),"end":.string("")])]),0)
     }
 
+    func testAllYearsKeepsSameYearDuplicatesButHidesCrossYearAllocation() {
+        let rows = [trip(1,2025,"A","2025-12-30","2026-01-02",total:30), trip(2,2025,"A","2025-12-30","2026-01-02",total:30), trip(3,2026,"A","2025-12-30","2026-01-02",total:30)]
+        XCTAssertEqual(AtlasCalculations.collapseYearDuplicates(rows).map(\.id),[1,2])
+    }
+
 }

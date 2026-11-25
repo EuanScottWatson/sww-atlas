@@ -54,7 +54,7 @@ struct TripsView: View {
             let matchesStatus = status == "All trips" || (status == "Upcoming" && !trip.start.isEmpty && trip.start > today) || (status == "Past" && !trip.start.isEmpty && trip.start <= today) || (status == "Undated" && trip.start.isEmpty)
             return matchesSearch && matchesRegion && matchesStatus
         }
-        let filtered = year == nil ? AtlasCalculations.uniqueVisits(rows) : rows
+        let filtered = year == nil ? AtlasCalculations.collapseYearDuplicates(rows) : rows
         return filtered.sorted { a,b in
             if sort == "Name" { return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending }
             if a.start.isEmpty != b.start.isEmpty { return !a.start.isEmpty }
@@ -83,7 +83,7 @@ struct TripsView: View {
         .navigationTitle("Trips")
         .searchable(text:$query,prompt:"Search trips and places")
         .refreshable { await store.load() }
-        .toolbar { ToolbarItem(placement:.primaryAction) { Menu { Button { showingNew = true } label: { Label("Add trip",systemImage:"plus") }; Button { showingJourney = true } label: { Label("Add multi-stop journey",systemImage:"point.topleft.down.curvedto.point.bottomright.up") } } label: { Image(systemName:"plus") }.accessibilityLabel("Add trip options") } }
+        .toolbar { ToolbarItem(placement:.navigationBarLeading) { Image("Brand").resizable().aspectRatio(contentMode:.fit).frame(width:26,height:26).clipShape(RoundedRectangle(cornerRadius:6)).accessibilityHidden(true) }; ToolbarItem(placement:.primaryAction) { Menu { Button { showingNew = true } label: { Label("Add trip",systemImage:"plus") }; Button { showingJourney = true } label: { Label("Add multi-stop journey",systemImage:"point.topleft.down.curvedto.point.bottomright.up") } } label: { Image(systemName:"plus") }.accessibilityLabel("Add trip options") } }
         .sheet(isPresented:$showingNew) { NavigationStack { RecordEditorView(kind:"trips",record:nil,initialDate:nil) } }
         .sheet(isPresented:$showingJourney) { NavigationStack { JourneyEditorView() } }
     }

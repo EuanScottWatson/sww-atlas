@@ -145,6 +145,16 @@ public enum AtlasCalculations {
         var seen = Set<String>()
         return rows.filter { seen.insert("\($0.name)|\($0.start)|\($0.end)").inserted }
     }
+    public static func collapseYearDuplicates(_ rows: [Record]) -> [Record] {
+        var seen: [String: Set<Int>] = [:]
+        return rows.filter { trip in
+            guard !trip.start.isEmpty, !trip.end.isEmpty else { return true }
+            let key = "\(trip.name)|\(trip.start)|\(trip.end)"
+            if seen[key] == nil { seen[key] = [trip.year]; return true }
+            if seen[key]?.contains(trip.year) == false { seen[key]?.insert(trip.year); return false }
+            return true
+        }
+    }
     public static func sum(_ rows: [Record], _ key: String) -> Double { rows.reduce(0) { $0 + ($1.number(key) ?? 0) } }
     public static func scoped(_ rows: [Record], year: Int?, month: Int? = nil) -> [Record] {
         rows.filter { trip in
