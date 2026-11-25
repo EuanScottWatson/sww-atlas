@@ -1,0 +1,46 @@
+name: Test Swift journey flow
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  swift-ios:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test travel calculations
+        run: swift test --package-path ios-native
+      - name: Test isolated website API
+        run: python3 -m unittest -q test_isolated.py
+        working-directory: website
+      - name: Install project generator
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate --spec ios-native/project.yml
+      - name: Prepare isolated simulator server
+        run: |
+          mkdir -p website/import "$RUNNER_TEMP/atlas-ui-data"
+          cp website/import-example/*.json website/import/
+          cp ios-native/UITestFixtures/*.json website/import/
+          HOLIDAY_DATA_DIR="$RUNNER_TEMP/atlas-ui-data" python3 website/server.py --host 127.0.0.1 --port 18780 >"$RUNNER_TEMP/atlas-ui-server.log" 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:18780/health && break; sleep 1; done
+      - name: Run iPhone simulator tests
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPhone")))')
+          echo "$DEVICE_ID" > "$RUNNER_TEMP/atlas-device-id"
+          xcodebuild test -project ios-native/AtlasNative.xcodeproj -scheme AtlasNative -only-testing:AtlasNativeUITests/AtlasNativeUITests/testCreateJourney \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath "$RUNNER_TEMP/atlas-simulator" -resultBundlePath "$RUNNER_TEMP/AtlasUITests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+          curl -fsS http://127.0.0.1:18780/api/data > "$RUNNER_TEMP/atlas-ui-result.json"
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); stops=[x for x in d["trips"] if x.get("journey_name")=="Atlas Test Journey"]; assert len(stops)==2 and stops[0]["group"]==stops[1]["group"]; print("Journey saves verified against isolated server")' "$RUNNER_TEMP/atlas-ui-result.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-journey-simulator-evidence
+          path: |
+            ${{ runner.temp }}/AtlasUITests.xcresult
+            ${{ runner.temp }}/atlas-ui-server.log
+          if-no-files-found: warn
+          retention-days: 7
