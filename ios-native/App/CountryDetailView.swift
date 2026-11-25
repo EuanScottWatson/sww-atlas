@@ -22,6 +22,10 @@ struct CountryDetailView: View {
             if names.isEmpty, let locationNames = trip.fields["locations"]?.string {
                 names = locationNames.split(separator: ";").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             }
+            if names.isEmpty, location["lat"]?.number != nil, location["lon"]?.number != nil,
+               !data.countries(for: trip).contains(where: { $0.caseInsensitiveCompare(trip.name) == .orderedSame }) {
+                names = [trip.name]
+            }
             for name in Set(names.filter { !$0.isEmpty }) { grouped[name, default: []].append(trip) }
         }
         return grouped.map { CountryPlace(name: $0.key, trips: $0.value) }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -41,6 +45,7 @@ struct CountryDetailView: View {
                         Text("\(journeyCount) \(journeyCount == 1 ? "trip" : "trips") · \(places.count) recorded \(places.count == 1 ? "place" : "places")").font(.subheadline).foregroundStyle(.secondary)
                     }
                 }.padding(.vertical, 5)
+                LabeledContent("Days on recorded trips", value: "\(AtlasCalculations.days(visits))")
                 if !firstVisit.isEmpty { LabeledContent("First visit", value: AtlasDates.display(firstVisit)) }
                 if !latestVisit.isEmpty { LabeledContent("Latest visit", value: AtlasDates.display(latestVisit)) }
             }
@@ -80,6 +85,12 @@ private struct CountryPlaceVisitsView: View {
     let data: AtlasData
     var body: some View {
         List {
+            Section("Overview") {
+                LabeledContent("Visits", value: "\(trips.count)")
+                LabeledContent("Days on recorded trips", value: "\(AtlasCalculations.days(trips))")
+                if let first = trips.map(\.start).filter({ !$0.isEmpty }).min() { LabeledContent("First visit", value: AtlasDates.display(first)) }
+                if let last = trips.map(\.start).filter({ !$0.isEmpty }).max() { LabeledContent("Latest visit", value: AtlasDates.display(last)) }
+            }
             Section("Your visits") {
                 ForEach(trips.sorted { $0.start > $1.start }) { trip in
                     NavigationLink { RecordDetailView(kind: "trips", id: trip.id) } label: { TripRow(trip: trip, data: data) }
