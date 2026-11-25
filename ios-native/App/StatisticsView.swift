@@ -36,6 +36,20 @@ struct StatisticsView: View {
                 HStack { Metric(label:"Total spend",value:pounds(summary.total)); Spacer(); Metric(label:"Days away",value:String(summary.days)) }
                 HStack { Metric(label:"Trip records",value:String(summary.records)); Spacer(); Metric(label:"Flights",value:String(format:"%g",summary.flights)); Spacer(); Metric(label:"Leave days",value:String(format:"%g",summary.leave)) }
             }
+            Section("Highlights") {
+                let today=localDateISO(Date())
+                let dated=data.trips.filter { !$0.start.isEmpty }.sorted { $0.start < $1.start }
+                let current=dated.first { $0.start <= today && !$0.end.isEmpty && $0.end >= today }
+                let next=dated.first { $0.start > today }
+                let latest=dated.last { $0.start <= today }
+                if let current { NavigationLink { RecordDetailView(kind:"trips",id:current.id) } label: { LabeledContent("Current",value:current.name) } }
+                if let next {
+                    NavigationLink { RecordDetailView(kind:"trips",id:next.id) } label: { LabeledContent("Next",value:next.name) }
+                    if let date=AtlasDates.parse(next.start), let todayDate=AtlasDates.parse(today) { Text("\(max(0,AtlasDates.utcCalendar.dateComponents([.day],from:todayDate,to:date).day ?? 0)) days to go").font(.footnote).foregroundStyle(.secondary) }
+                }
+                if let latest { NavigationLink { RecordDetailView(kind:"trips",id:latest.id) } label: { LabeledContent("Latest",value:latest.name) } }
+                if current == nil && next == nil && latest == nil { Text("No dated trips yet.").foregroundStyle(.secondary) }
+            }
             Section(year == nil ? "Yearly breakdown" : "Monthly breakdown") {
                 Picker("Measure",selection:$metric) { ForEach(["Spend","Days","Flights","Leave"],id:\.self) { Text($0) } }.pickerStyle(.segmented)
                 Chart(buckets,id:\.self) { bucket in BarMark(x:.value("Period",label(bucket)),y:.value(metric,value(bucket))).foregroundStyle(Color.atlasAccent) }
@@ -43,6 +57,10 @@ struct StatisticsView: View {
                 ForEach(buckets,id:\.self) { bucket in LabeledContent(label(bucket),value:metric == "Spend" ? pounds(value(bucket)) : String(format:"%g",value(bucket))) }
             }
             Section("Cost split") {
+                if summary.travel + summary.accommodation > 0 {
+                    ProgressView(value:summary.travel,total:summary.travel + summary.accommodation).tint(.atlasAccent)
+                    Text("\(Int((summary.travel / (summary.travel + summary.accommodation) * 100).rounded()))% travel").font(.caption).foregroundStyle(.secondary)
+                }
                 LabeledContent("Travel",value:pounds(summary.travel))
                 LabeledContent("Accommodation",value:pounds(summary.accommodation))
                 Text("Component costs can differ from recorded totals.").font(.footnote).foregroundStyle(.secondary)
@@ -77,7 +95,8 @@ struct AnnualEditorView: View {
     let year:Int; let values:[String:JSONValue]
     @State private var draft:[String:String]
     @State private var failure:String?
-    @State private var saving=false, confirmDiscard=false
+    @State private var saving=false
+    @State private var confirmDiscard=false
     init(year:Int,values:[String:JSONValue]) { self.year=year; self.values=values; _draft=State(initialValue:Dictionary(uniqueKeysWithValues:Self.fields.map { ($0.key,values[$0.key]?.number.map { String($0) } ?? "") })) }
     var body:some View {
         Form {

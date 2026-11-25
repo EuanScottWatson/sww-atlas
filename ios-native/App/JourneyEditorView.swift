@@ -9,9 +9,13 @@ private struct StopDraft: Identifiable {
 struct JourneyEditorView: View {
     @EnvironmentObject private var store: AtlasStore
     @Environment(\.dismiss) private var dismiss
-    @State private var name = "", travel = "", flights = "", leave = ""
+    @State private var name = ""
+    @State private var travel = ""
+    @State private var flights = ""
+    @State private var leave = ""
     @State private var stops = [StopDraft(),StopDraft()]
-    @State private var saving = false, confirmDiscard = false
+    @State private var saving = false
+    @State private var confirmDiscard = false
     @State private var failure: String?
     @State private var group = "journey-\(UUID().uuidString.lowercased())"
     private let regions = ["UK","Europe","Africa","North America","South America","Asia","Oceania"]

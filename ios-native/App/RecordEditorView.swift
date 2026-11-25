@@ -26,8 +26,8 @@ struct RecordEditorView: View {
         self.kind = kind; self.record = record
         let date = initialDate ?? Date()
         _draft = State(initialValue:record?.fields ?? [:])
-        _startDate = State(initialValue:AtlasDates.parse(record?.start ?? "") ?? date)
-        _endDate = State(initialValue:AtlasDates.parse(record?.end ?? "") ?? date)
+        _startDate = State(initialValue:localDate(fromISO:record?.start ?? "") ?? date)
+        _endDate = State(initialValue:localDate(fromISO:record?.end ?? "") ?? date)
         _hasStart = State(initialValue:record == nil ? initialDate != nil : !(record?.start.isEmpty ?? true))
         _hasEnd = State(initialValue:record == nil ? initialDate != nil : !(record?.end.isEmpty ?? true))
         _places = State(initialValue:[])

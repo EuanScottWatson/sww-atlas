@@ -18,6 +18,38 @@ jobs:
         run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate --spec ios-native/project.yml
+      - name: Prepare isolated simulator server
+        run: |
+          mkdir -p website/import "$RUNNER_TEMP/atlas-ui-data"
+          cp website/import-example/*.json website/import/
+          cp ios-native/UITestFixtures/*.json website/import/
+          HOLIDAY_DATA_DIR="$RUNNER_TEMP/atlas-ui-data" python3 website/server.py --host 127.0.0.1 --port 18780 >"$RUNNER_TEMP/atlas-ui-server.log" 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:18780/health && break; sleep 1; done
+      - name: Run iPhone simulator tests
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPhone")))')
+          echo "$DEVICE_ID" > "$RUNNER_TEMP/atlas-device-id"
+          xcodebuild test -project ios-native/AtlasNative.xcodeproj -scheme AtlasNative \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath "$RUNNER_TEMP/atlas-simulator" -resultBundlePath "$RUNNER_TEMP/AtlasUITests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Capture simulator screen
+        run: |
+          DEVICE_ID=$(cat "$RUNNER_TEMP/atlas-device-id")
+          xcrun simctl terminate "$DEVICE_ID" uk.sww.atlas || true
+          SIMCTL_CHILD_ATLAS_TEST_BASE=http://127.0.0.1:18780 xcrun simctl launch "$DEVICE_ID" uk.sww.atlas
+          sleep 5
+          xcrun simctl io "$DEVICE_ID" screenshot "$RUNNER_TEMP/Atlas-simulator.png"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-simulator-evidence
+          path: |
+            ${{ runner.temp }}/Atlas-simulator.png
+            ${{ runner.temp }}/AtlasUITests.xcresult
+            ${{ runner.temp }}/atlas-ui-server.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Build unsigned iPhone app
         run: |
           xcodebuild -project ios-native/AtlasNative.xcodeproj -scheme AtlasNative \

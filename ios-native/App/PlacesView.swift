@@ -49,7 +49,9 @@ private struct NativeMap: UIViewRepresentable {
 }
 struct PlacesView: View {
     let data:AtlasData
-    @State private var mode="Visited", country="All countries", query=""
+    @State private var mode="Visited"
+    @State private var country="All countries"
+    @State private var query=""
     @State private var selected:PlacePin?
     private var trips:[Record] {
         let today=localDateISO(Date())

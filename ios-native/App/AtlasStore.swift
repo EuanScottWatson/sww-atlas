@@ -8,7 +8,12 @@ final class AtlasStore: ObservableObject {
     @Published var saving = false
     @Published var error: String?
     private var baseURL: URL?
-    private let endpoints = ["http://192.168.32.48:7780", "http://100.94.227.14:7780"]
+    private var endpoints: [String] {
+        #if DEBUG
+        if let value=ProcessInfo.processInfo.environment["ATLAS_TEST_BASE"], value == "http://127.0.0.1:18780" { return [value] }
+        #endif
+        return ["http://192.168.32.48:7780", "http://100.94.227.14:7780"]
+    }
 
     func load() async {
         guard !loading else { return }
@@ -97,4 +102,12 @@ func recordDates(_ record: Record) -> String {
 func localDateISO(_ date: Date) -> String {
     let parts=Calendar.current.dateComponents([.year,.month,.day],from:date)
     return String(format:"%04d-%02d-%02d",parts.year ?? 0,parts.month ?? 0,parts.day ?? 0)
+}
+
+func localDate(fromISO value: String) -> Date? {
+    let parts=value.split(separator:"-").compactMap { Int($0) }
+    guard parts.count == 3 else { return nil }
+    var components=DateComponents(); components.year=parts[0]; components.month=parts[1]; components.day=parts[2]; components.hour=12
+    guard let date=Calendar.current.date(from:components), localDateISO(date) == value else { return nil }
+    return date
 }

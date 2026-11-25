@@ -5,7 +5,9 @@ struct RecordDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let kind: String
     let id: Int
-    @State private var editing = false, confirmDelete = false, deleting = false
+    @State private var editing = false
+    @State private var confirmDelete = false
+    @State private var deleting = false
     @State private var failure: String?
     private var record: Record? { (kind == "trips" ? store.data?.trips : store.data?.events)?.first { $0.id == id } }
     var body: some View {

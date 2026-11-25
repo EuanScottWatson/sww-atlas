@@ -45,7 +45,7 @@ struct TripsView: View {
     @State private var showingJourney = false
     private var years: [Int] { Array(Set(data.trips.map(\.year).filter { $0 > 0 })).sorted(by: >) }
     private var results: [Record] {
-        let today = AtlasDates.iso(Date())
+        let today = localDateISO(Date())
         let scoped = AtlasCalculations.scoped(data.trips, year:year, month:month)
         let rows = scoped.filter { trip in
             let hay = ([trip.name,trip.text("notes"),trip.text("locations"),trip.text("journey_name")] + data.countries(for:trip)).joined(separator:" ")

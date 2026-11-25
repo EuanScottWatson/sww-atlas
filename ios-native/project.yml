@@ -26,6 +26,10 @@ targets:
     info:
       path: App/Info.plist
       properties:
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: APPL
         CFBundleDisplayName: The SWW Atlas
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -37,8 +41,23 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
           NSAllowsArbitraryLoads: true
+  AtlasNativeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: AtlasNative
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.sww.atlas.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: AtlasNative
 schemes:
   AtlasNative:
     build:
       targets:
         AtlasNative: all
+    test:
+      targets:
+        - AtlasNativeUITests
