@@ -68,6 +68,37 @@ final class AtlasNativeUITests: XCTestCase {
         capture(app, name: "Map")
     }
 
+    func testCountryBreakdownAndLabeledFields() throws {
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+        app.staticTexts["Atlas Test Trip"].firstMatch.tap()
+        app.navigationBars.buttons["Edit"].tap()
+        let flights = app.staticTexts["Flights"]
+        reveal(flights, in: app)
+        XCTAssertTrue(flights.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Recorded days"].exists)
+        XCTAssertTrue(app.staticTexts["Leave days"].exists)
+        capture(app, name: "Labeled trip fields")
+        app.buttons["Cancel"].tap()
+        app.buttons["Discard changes"].tap()
+        app.tabBars.buttons["Map"].tap()
+        XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 10))
+        capture(app, name: "Scratch map")
+        let france = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "France")).firstMatch
+        reveal(france, in: app)
+        XCTAssertTrue(france.waitForExistence(timeout: 10)); france.tap()
+        XCTAssertTrue(app.staticTexts["First visit"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Latest visit"].exists)
+        capture(app, name: "Country breakdown")
+    }
+
+    func testFallsBackToReachableServer() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["ATLAS_TEST_BASE"] = "fallback-test"
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+    }
+
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<10 where !element.isHittable { app.swipeUp() }
     }

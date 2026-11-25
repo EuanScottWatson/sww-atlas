@@ -15,4 +15,4 @@ The GitHub Actions workflow builds an unsigned IPA, which needs signing in iLoad
 
 ## SwiftUI iPhone app
 
-`ios-native/` contains the separate SwiftUI implementation. It uses the same server and bundle identifier as the React Native app. The `Build Swift iPhone app` workflow tests its calculations and produces an unsigned IPA for iLoader. The existing React Native source and workflow remain available. Native device testing is required before relying on the Swift app.
+`ios-native/` contains the separate SwiftUI implementation. It uses the same server and bundle identifier as the React Native app. The `Build Swift iPhone app` workflow tests its calculations and produces an unsigned IPA for iLoader. The existing React Native source and workflow remain available. The Swift map includes a country overview with flag and visit breakdowns, plus a separate place-pin view. Country boundaries are bundled from Natural Earth; very small features can require zooming in. The app checks both private server addresses before saving and does not replay a potentially completed write. Native device testing is required before relying on the Swift app.

@@ -113,7 +113,7 @@ struct AnnualEditorView: View {
     var body:some View {
         Form {
             Section { Text("These figures do not recalculate from trips.").font(.footnote).foregroundStyle(.secondary) }
-            Section { ForEach(Self.fields,id:\.key) { field in TextField(field.label,text:Binding(get:{draft[field.key] ?? ""},set:{draft[field.key]=$0})).keyboardType(.decimalPad) } }
+            Section { ForEach(Self.fields,id:\.key) { field in LabeledContent(field.label) { TextField(field.label,text:Binding(get:{draft[field.key] ?? ""},set:{draft[field.key]=$0})).multilineTextAlignment(.trailing).keyboardType(.decimalPad) } } }
             if let failure { Text(failure).foregroundStyle(.red) }
             Section { Button(saving ? "Saving…" : "Save figures") { Task { await save() } }.disabled(saving) }
         }

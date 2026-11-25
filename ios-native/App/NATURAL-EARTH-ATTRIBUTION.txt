@@ -1,0 +1,4 @@
+Country boundaries: Natural Earth, 1:50m Admin 0 Countries.
+Natural Earth data is in the public domain.
+Source: https://github.com/nvkelso/natural-earth-vector/tree/master/geojson
+The bundled file retains geometry and the ISO country identifiers used by the app.

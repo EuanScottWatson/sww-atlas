@@ -6,12 +6,16 @@ enum CountryFlags {
         guard let url = Bundle.main.url(forResource:"countries",withExtension:"json"), let data = try? Data(contentsOf:url), let countries = try? JSONDecoder().decode([CountryCode].self,from:data) else { return [:] }
         return Dictionary(countries.map { ($0.name.lowercased(),$0.code) },uniquingKeysWith: { first,_ in first })
     }()
+    static func code(_ name: String) -> String? {
+        let key = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let aliases = ["england":"GB", "scotland":"GB", "wales":"GB", "northern ireland":"GB", "united states of america":"US", "united states":"US", "usa":"US", "united kingdom":"GB", "uk":"GB", "hong kong":"HK", "macau":"MO", "vatican city":"VA", "turkey":"TR", "south korea":"KR", "russia":"RU", "czech republic":"CZ"]
+        return aliases[key] ?? codes[key]
+    }
     static func flag(_ name: String) -> String {
-        let key = name.lowercased()
+        let key = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let special = ["england":"🏴\u{e0067}\u{e0062}\u{e0065}\u{e006e}\u{e0067}\u{e007f}","scotland":"🏴\u{e0067}\u{e0062}\u{e0073}\u{e0063}\u{e0074}\u{e007f}","wales":"🏴\u{e0067}\u{e0062}\u{e0077}\u{e006c}\u{e0073}\u{e007f}","northern ireland":"🇬🇧"]
         if let flag = special[key] { return flag }
-        let aliases = ["united states of america":"US","united states":"US","usa":"US","united kingdom":"GB","hong kong":"HK","macau":"MO","vatican city":"VA","turkey":"TR","south korea":"KR","russia":"RU","czech republic":"CZ"]
-        guard let code = aliases[key] ?? codes[key], code.utf8.count == 2 else { return "🌐" }
+        guard let code = code(name), code.utf8.count == 2 else { return "🌐" }
         return code.unicodeScalars.compactMap { UnicodeScalar($0.value + 127397) }.map(String.init).joined()
     }
 }

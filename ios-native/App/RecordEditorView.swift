@@ -43,8 +43,8 @@ struct RecordEditorView: View {
     var body: some View {
         Form {
             Section(isTrip ? "Trip" : "Event") {
-                TextField(isTrip ? "Destination" : "Event name",text:string("name"))
-                if isTrip { TextField("Country or countries",text:string("country")) }
+                LabeledContent(isTrip ? "Trip name" : "Event name") { TextField(isTrip ? "Destination" : "Event name",text:string("name")).multilineTextAlignment(.trailing) }
+                if isTrip { LabeledContent("Country or countries") { TextField("Country or countries",text:string("country")).multilineTextAlignment(.trailing) } }
                 Toggle("Start date",isOn:$hasStart)
                 if hasStart { DatePicker("Start",selection:$startDate,displayedComponents:.date) }
                 Toggle("End date",isOn:$hasEnd)
@@ -53,14 +53,14 @@ struct RecordEditorView: View {
             }
             if isTrip {
                 Section("Costs and time") {
-                    TextField("Allocation year",text:number("year")).keyboardType(.numberPad)
+                    LabeledContent("Allocation year") { TextField("Allocation year",text:number("year")).multilineTextAlignment(.trailing) }.keyboardType(.numberPad)
                     Picker("Region",selection:string("region")) { Text("Europe").tag(""); ForEach(["UK","Europe","Africa","North America","South America","Asia","Oceania"],id:\.self) { Text($0).tag($0) } }
-                    TextField("Travel (£)",text:number("travel")).keyboardType(.decimalPad)
-                    TextField("Accommodation (£)",text:number("accommodation")).keyboardType(.decimalPad)
-                    TextField("Recorded total (£)",text:number("total")).keyboardType(.decimalPad)
-                    TextField("Flights",text:number("flights")).keyboardType(.decimalPad)
-                    TextField("Recorded days",text:number("days")).keyboardType(.decimalPad)
-                    TextField("Leave days",text:number("leave")).keyboardType(.decimalPad)
+                    LabeledContent("Travel (£)") { TextField("Travel (£)",text:number("travel")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                    LabeledContent("Accommodation (£)") { TextField("Accommodation (£)",text:number("accommodation")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                    LabeledContent("Recorded total (£)") { TextField("Recorded total (£)",text:number("total")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                    LabeledContent("Flights") { TextField("Flights",text:number("flights")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                    LabeledContent("Recorded days") { TextField("Recorded days",text:number("days")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                    LabeledContent("Leave days") { TextField("Leave days",text:number("leave")).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
                 }
                 Section("Journey") {
                     Picker("Journey",selection:Binding(get:{ draft["group"]?.string ?? "" },set:{ value in

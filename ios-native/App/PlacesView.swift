@@ -50,6 +50,7 @@ private struct NativeMap: UIViewRepresentable {
 struct PlacesView: View {
     let data:AtlasData
     @State private var mode="Visited"
+    @State private var mapStyle="Countries"
     @State private var country="All countries"
     @State private var query=""
     @State private var selected:PlacePin?
@@ -92,11 +93,17 @@ struct PlacesView: View {
             Section {
                 Picker("Places",selection:$mode) { Text("Visited").tag("Visited"); Text("Upcoming").tag("Upcoming"); Text("All").tag("All") }.pickerStyle(.segmented).onChange(of:mode) { _ in country="All countries" }
                 Menu { Picker("Country",selection:$country) { Text("All countries").tag("All countries"); ForEach(countries,id:\.self) { Text("\(CountryFlags.flag($0)) \($0)").tag($0) } } } label: { Label(country,systemImage:"globe.europe.africa") }
-                NativeMap(pins:pins) { selected=$0 }.frame(height:350).listRowInsets(EdgeInsets())
-                Text("Tap a pin for visit history. Locations are approximate.").font(.footnote).foregroundStyle(.secondary)
+                Picker("Map view",selection:$mapStyle) { Text("Countries").tag("Countries"); Text("Places").tag("Places") }.pickerStyle(.segmented)
+                if mapStyle == "Countries" {
+                    CountryMapView(countries:countries).frame(height:350).listRowInsets(EdgeInsets()).accessibilityLabel("World map showing recorded countries")
+                    Text("Highlighted countries are based on your trips. Zoom and pan to explore. Some small islands may not appear at this map scale.").font(.footnote).foregroundStyle(.secondary)
+                } else {
+                    NativeMap(pins:pins) { selected=$0 }.frame(height:350).listRowInsets(EdgeInsets())
+                    Text("Tap a pin for visit history. Locations are approximate.").font(.footnote).foregroundStyle(.secondary)
+                }
             }
             if !unmapped.isEmpty { Section("Trips without map pins") { ForEach(unmapped) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } } }
-            Section("Countries · \(countries.count)") { ForEach(countries,id:\.self) { item in Button { country=item } label: { HStack { Text(CountryFlags.flag(item)); Text(item); Spacer(); Text("\(count(item)) trips").foregroundStyle(.secondary) } } } }
+            Section("Countries · \(countries.count)") { ForEach(countries,id:\.self) { item in NavigationLink { CountryDetailView(country:item,trips:trips.filter { data.countries(for:$0).contains(item) },data:data) } label: { HStack { Text(CountryFlags.flag(item)); Text(item); Spacer(); Text("\(count(item)) trips").foregroundStyle(.secondary) } } } }
         }
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())

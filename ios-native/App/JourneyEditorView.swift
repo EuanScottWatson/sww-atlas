@@ -22,19 +22,19 @@ struct JourneyEditorView: View {
     var body: some View {
         Form {
             Section("Journey") {
-                TextField("Journey name",text:$name)
-                TextField("Shared travel (£)",text:$travel).keyboardType(.decimalPad)
-                TextField("Shared flights",text:$flights).keyboardType(.decimalPad)
-                TextField("Shared leave days",text:$leave).keyboardType(.decimalPad)
+                LabeledContent("Journey name") { TextField("Journey name",text:$name).multilineTextAlignment(.trailing) }
+                LabeledContent("Shared travel (£)") { TextField("Shared travel (£)",text:$travel).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                LabeledContent("Shared flights") { TextField("Shared flights",text:$flights).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
+                LabeledContent("Shared leave days") { TextField("Shared leave days",text:$leave).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
             }
             ForEach($stops) { $stop in
                 let number = (stops.firstIndex(where: { $0.id == stop.id }) ?? 0) + 1
                 Section("Stop \(number)") {
-                    TextField("Destination",text:$stop.name).accessibilityIdentifier("journey-destination-\(number)")
-                    TextField("Country",text:$stop.country)
+                    LabeledContent("Destination") { TextField("Destination",text:$stop.name).multilineTextAlignment(.trailing).accessibilityIdentifier("journey-destination-\(number)") }
+                    LabeledContent("Country") { TextField("Country",text:$stop.country).multilineTextAlignment(.trailing) }
                     DatePicker("Start",selection:$stop.start,displayedComponents:.date)
                     DatePicker("End",selection:$stop.end,displayedComponents:.date)
-                    TextField("Accommodation (£)",text:$stop.accommodation).keyboardType(.decimalPad)
+                    LabeledContent("Accommodation (£)") { TextField("Accommodation (£)",text:$stop.accommodation).multilineTextAlignment(.trailing) }.keyboardType(.decimalPad)
                     Picker("Region",selection:$stop.region) { ForEach(regions,id:\.self) { Text($0) } }
                     Toggle("Day trip",isOn:$stop.dayTrip)
                     if stops.count > 2 { Button("Remove stop",role:.destructive) { let id=stop.id; stops.removeAll { $0.id == id } } }

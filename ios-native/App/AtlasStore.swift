@@ -10,7 +10,10 @@ final class AtlasStore: ObservableObject {
     private var baseURL: URL?
     private var endpoints: [String] {
         #if DEBUG
-        if let value=ProcessInfo.processInfo.environment["ATLAS_TEST_BASE"], value == "http://127.0.0.1:18780" { return [value] }
+        if let value=ProcessInfo.processInfo.environment["ATLAS_TEST_BASE"] {
+            if value == "http://127.0.0.1:18780" { return [value] }
+            if value == "fallback-test" { return ["http://127.0.0.1:1", "http://127.0.0.1:18780"] }
+        }
         #endif
         return ["http://192.168.32.48:7780", "http://100.94.227.14:7780"]
     }
@@ -34,15 +37,41 @@ final class AtlasStore: ObservableObject {
         error = "Unable to connect to the travel server. \(failure)"
     }
 
+    private var preferredEndpoints: [URL] {
+        let available = endpoints.compactMap(URL.init(string:))
+        guard let baseURL, available.contains(baseURL) else { return available }
+        return [baseURL] + available.filter { $0 != baseURL }
+    }
+
+    private func reachableServer() async throws -> URL {
+        for url in preferredEndpoints {
+            do {
+                _ = try await request(base: url, path: "/health", body: nil, timeout: 4)
+                baseURL = url
+                return url
+            } catch { continue }
+        }
+        throw AtlasError.message("Unable to reach the travel server. Check your connection or connect Tailscale, then try again.")
+    }
+
     func fetch(_ path: String) async throws -> JSONValue {
-        guard let baseURL else { throw AtlasError.message("Connect to the server first.") }
-        let bytes = try await request(base: baseURL, path: path, body: nil, timeout: 15)
-        return try JSONDecoder().decode(JSONValue.self, from: bytes)
+        var lastError: Error = AtlasError.message("Unable to reach the travel server.")
+        for url in preferredEndpoints {
+            do {
+                let bytes = try await request(base: url, path: path, body: nil, timeout: 5)
+                let value = try JSONDecoder().decode(JSONValue.self, from: bytes)
+                baseURL = url
+                return value
+            } catch let error as AtlasError { throw error }
+            catch { lastError = error }
+        }
+        throw lastError
     }
 
     func post(_ path: String, body: [String:JSONValue]) async throws -> JSONValue {
-        guard let baseURL else { throw AtlasError.message("Connect to the server first.") }
-        let bytes = try await request(base: baseURL, path: path, body: body, timeout: 20)
+        // Probe before writing; never replay a write after an uncertain response.
+        let url = try await reachableServer()
+        let bytes = try await request(base: url, path: path, body: body, timeout: 20)
         return try JSONDecoder().decode(JSONValue.self, from: bytes)
     }
 
