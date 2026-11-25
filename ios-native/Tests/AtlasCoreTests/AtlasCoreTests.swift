@@ -31,4 +31,27 @@ final class AtlasCoreTests: XCTestCase {
         let trip = Record(["group":.string("2023-world")])
         XCTAssertTrue(AtlasCalculations.isShared(trip,key:"total",trips:[]))
     }
+    func testMonthlyAllocationsAndNullCosts() {
+        let first = Record(["id":.number(1),"name":.string("Cross-year"),"year":.number(2026),"start":.string("2025-12-30"),"end":.string("2026-01-02"),"total":.number(100),"travel":.null])
+        let second = Record(["id":.number(2),"name":.string("Summer"),"year":.number(2026),"start":.string("2026-06-28"),"end":.string("2026-07-03"),"total":.number(200),"travel":.number(75)])
+        XCTAssertEqual(AtlasCalculations.allocationMonth(first),1)
+        XCTAssertEqual(AtlasCalculations.summary([first,second],year:2026,month:1).total,100)
+        XCTAssertEqual(AtlasCalculations.summary([first,second],year:2026,month:7).total,0)
+        XCTAssertEqual(AtlasCalculations.summary([first,second],year:2026,month:7).days,3)
+    }
+    func testExistingPinsAndConfirmedCalendarDates() {
+        let trip = Record(["id":.number(1),"name":.string("A"),"year":.number(2026),"start":.string("2026-01-02"),"end":.string("2026-01-04"),"calendar_confirmed":.bool(true),"pins":.array([])])
+        let data = AtlasData(json:["trips":.array([.object(trip.fields)]),"places":.object(["A":.object(["country":.string("Japan"),"lat":.number(1),"lon":.number(2)])]),"calendar-overrides":.array([.array([.number(2026),.string("A"),.string("2026-01-02"),.string("2026-01-03"),.string("2026-01-05")])])])
+        XCTAssertEqual(data.countries(for:trip),["Japan"])
+        XCTAssertEqual(data.place(for:trip)["pins"],.array([]))
+        XCTAssertEqual(data.trips(on:"2026-01-02").count,1)
+    }
+    func testSharedFieldsAndUnknownDates() {
+        let owner=Record(["group":.string("journey-one"),"shared_fields":.array([.string("travel")]),"travel":.number(20)])
+        let other=Record(["group":.string("journey-one"),"travel":.null])
+        XCTAssertTrue(AtlasCalculations.isShared(other,key:"travel",trips:[owner,other]))
+        XCTAssertFalse(AtlasCalculations.isShared(other,key:"total",trips:[owner,other]))
+        XCTAssertEqual(AtlasCalculations.days([Record(["start":.string(""),"end":.string("")])]),0)
+    }
+
 }

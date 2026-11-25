@@ -98,6 +98,8 @@ struct PlacesView: View {
             if !unmapped.isEmpty { Section("Trips without map pins") { ForEach(unmapped) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } } }
             Section("Countries · \(countries.count)") { ForEach(countries,id:\.self) { item in Button { country=item } label: { HStack { Text(CountryFlags.flag(item)); Text(item); Spacer(); Text("\(count(item)) trips").foregroundStyle(.secondary) } } } }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Map")
         .searchable(text:$query,prompt:"Search recorded places")
         .sheet(item:$selected) { pin in NavigationStack { PlaceDetailView(pin:pin,data:data) } }
@@ -119,6 +121,8 @@ private struct PlaceDetailView:View {
             }
             Section("Your visits") { ForEach(AtlasCalculations.uniqueVisits(pin.trips)) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle(pin.title ?? "Place").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Done") { dismiss() } } }
         .task {

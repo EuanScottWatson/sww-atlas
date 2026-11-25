@@ -89,6 +89,7 @@ enum AtlasError: LocalizedError {
 
 extension Color {
     static let atlasAccent = Color(red: 0.10, green: 0.82, blue: 0.85)
+    static let atlasBackground = Color(red: 0.027, green: 0.082, blue: 0.14)
 }
 
 func pounds(_ value: Double?) -> String {

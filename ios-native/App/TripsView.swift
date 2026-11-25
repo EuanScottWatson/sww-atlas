@@ -78,10 +78,12 @@ struct TripsView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Trips")
         .searchable(text:$query,prompt:"Search trips and places")
         .refreshable { await store.load() }
-        .toolbar { ToolbarItem(placement:.primaryAction) { Menu { Button { showingNew = true } label: { Label("Add trip",systemImage:"plus") }; Button { showingJourney = true } label: { Label("Add multi-stop journey",systemImage:"point.topleft.down.curvedto.point.bottomright.up") } } label: { Image(systemName:"plus") }.accessibilityLabel("Add trip") } }
+        .toolbar { ToolbarItem(placement:.primaryAction) { Menu { Button { showingNew = true } label: { Label("Add trip",systemImage:"plus") }; Button { showingJourney = true } label: { Label("Add multi-stop journey",systemImage:"point.topleft.down.curvedto.point.bottomright.up") } } label: { Image(systemName:"plus") }.accessibilityLabel("Add trip options") } }
         .sheet(isPresented:$showingNew) { NavigationStack { RecordEditorView(kind:"trips",record:nil,initialDate:nil) } }
         .sheet(isPresented:$showingJourney) { NavigationStack { JourneyEditorView() } }
     }

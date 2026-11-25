@@ -13,6 +13,8 @@ struct RecordEditorView: View {
     @State private var hasEnd: Bool
     @State private var query = ""
     @State private var searchResults: [JSONValue] = []
+    @State private var searching = false
+    @State private var searchMessage: String?
     @State private var places: [[String:JSONValue]]
     @State private var placesChanged = false
     @State private var showMap = false
@@ -61,7 +63,10 @@ struct RecordEditorView: View {
                     TextField("Leave days",text:number("leave")).keyboardType(.decimalPad)
                 }
                 Section("Journey") {
-                    Picker("Journey",selection:string("group")) { Text("Standalone trip").tag(""); ForEach(groups) { trip in Text(trip.text("journey_name").isEmpty ? trip.text("group") : trip.text("journey_name")).tag(trip.text("group")) } }
+                    Picker("Journey",selection:Binding(get:{ draft["group"]?.string ?? "" },set:{ value in
+                        if value != (draft["group"]?.string ?? "") { draft["shared_fields"] = .array([]) }
+                        draft["group"] = .string(value)
+                    })) { Text("Standalone trip").tag(""); ForEach(groups) { trip in Text(trip.text("journey_name").isEmpty ? trip.text("group") : trip.text("journey_name")).tag(trip.text("group")) } }
                     if !(draft["group"]?.string ?? "").isEmpty {
                         Picker("Stop type",selection:string("trip_role")) { Text("Stay").tag(""); Text("Stay").tag("stop"); Text("Day trip").tag("day-trip") }
                         ForEach(["travel","flights"],id:\.self) { key in
@@ -74,7 +79,8 @@ struct RecordEditorView: View {
                     }
                 }
                 Section("Places") {
-                    HStack { TextField("Search for a place",text:$query); Button("Search") { Task { await searchPlaces() } }.disabled(query.trimmingCharacters(in:.whitespaces).count < 2) }
+                    HStack { TextField("Search for a place",text:$query); Button(searching ? "Searching…" : "Search") { Task { await searchPlaces() } }.disabled(searching || query.trimmingCharacters(in:.whitespaces).count < 2) }
+                    if let searchMessage { Text(searchMessage).font(.footnote).foregroundStyle(.secondary) }
                     ForEach(Array(searchResults.enumerated()),id:\.offset) { _, result in
                         if let place = result.object {
                             Button { addPlace(place) } label: { VStack(alignment:.leading) { Text(place["name"]?.string ?? "Place"); Text(place["display"]?.string ?? "").font(.caption).foregroundStyle(.secondary) } }
@@ -97,6 +103,10 @@ struct RecordEditorView: View {
             if let failure { Section { Text(failure).foregroundStyle(.red) } }
             Section { Button(saving ? "Saving…" : "Save") { Task { await save() } }.disabled(saving) }
         }
+        .scrollDismissesKeyboard(.interactively)
+        .modifier(KeyboardDismissToolbar())
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle(record == nil ? (isTrip ? "Add trip" : "Add event") : "Edit entry")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Cancel") { confirmDiscard=true } } }
@@ -112,18 +122,20 @@ struct RecordEditorView: View {
         else if let lat=location["lat"]?.number, let lon=location["lon"]?.number { places=[["name":.string(location["label"]?.string ?? record.name),"lat":.number(lat),"lon":.number(lon)]] }
     }
     private func searchPlaces() async {
+        searching=true; searchMessage=nil
+        defer { searching=false }
         do {
             var components=URLComponents(); components.path="/api/place-search"; components.queryItems=[URLQueryItem(name:"q",value:query)]
             searchResults = try await store.fetch(components.string ?? "").array ?? []
-            if searchResults.isEmpty { failure="No places found. Try a different search." } else { failure=nil }
-        } catch { failure=error.localizedDescription }
+            if searchResults.isEmpty { searchMessage="No places found. Try a different search." }
+        } catch { searchMessage=error.localizedDescription }
     }
     private func addPlace(_ place:[String:JSONValue]) {
         guard let name=place["name"]?.string, !name.isEmpty, let lat=place["lat"]?.number, let lon=place["lon"]?.number else { return }
         guard !places.contains(where:{ abs(($0["lat"]?.number ?? 999)-lat)<0.0001 && abs(($0["lon"]?.number ?? 999)-lon)<0.0001 }) else { return }
         places.append(["name":.string(name),"lat":.number(lat),"lon":.number(lon)]); placesChanged=true
         if (draft["country"]?.string ?? "").isEmpty, let country=place["country"]?.string { draft["country"] = .string(country) }
-        searchResults=[]; query=""
+        searchResults=[]; query=""; searchMessage=nil
     }
     private func localISO(_ date: Date) -> String {
         let parts = Calendar.current.dateComponents([.year,.month,.day], from:date)
@@ -153,7 +165,6 @@ struct RecordEditorView: View {
             if (record == nil && result["total"]?.number == nil) || (record != nil && changed && !totalChanged && !shared) { result["total"] = .number((((result["travel"]?.number ?? 0)+(result["accommodation"]?.number ?? 0))*100).rounded()/100) }
             let oldGroup = record?.text("group") ?? "", group = result["group"]?.string ?? ""
             if group != oldGroup {
-                result["shared_fields"] = .array([])
                 if group.isEmpty { result.removeValue(forKey:"journey_name") }
                 else if let match = store.data?.trips.first(where: { $0.text("group") == group && !$0.text("journey_name").isEmpty }) { result["journey_name"] = .string(match.text("journey_name")) }
                 else { result.removeValue(forKey:"journey_name") }

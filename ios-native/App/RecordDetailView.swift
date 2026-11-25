@@ -56,6 +56,8 @@ struct RecordDetailView: View {
                     if let failure { Section { Text(failure).foregroundStyle(.red) } }
                     Section { Button("Delete \(kind == "trips" ? "trip" : "event")",role:.destructive) { confirmDelete=true }.disabled(deleting) }
                 }
+                .scrollContentBackground(.hidden)
+                .background(Color.atlasBackground.ignoresSafeArea())
                 .navigationTitle(record.name).navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement:.primaryAction) { Button("Edit") { editing=true } } }
                 .sheet(isPresented:$editing) { NavigationStack { RecordEditorView(kind:kind,record:record,initialDate:nil) } }

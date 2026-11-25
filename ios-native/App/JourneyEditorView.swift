@@ -43,6 +43,10 @@ struct JourneyEditorView: View {
             if let failure { Section { Text(failure).foregroundStyle(.red) } }
             Section { Button(saving ? "Saving…" : "Save journey") { Task { await save() } }.disabled(saving) }
         }
+        .scrollDismissesKeyboard(.interactively)
+        .modifier(KeyboardDismissToolbar())
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("New journey").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Cancel") { confirmDiscard=true } } }
         .interactiveDismissDisabled()

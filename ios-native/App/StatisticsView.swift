@@ -56,6 +56,16 @@ struct StatisticsView: View {
                     .frame(height:180).accessibilityLabel("\(metric) by \(year == nil ? "year" : "month")")
                 ForEach(buckets,id:\.self) { bucket in LabeledContent(label(bucket),value:metric == "Spend" ? pounds(value(bucket)) : String(format:"%g",value(bucket))) }
             }
+            Section("Recorded allocations") {
+                ForEach(buckets,id:\.self) { bucket in
+                    let row=AtlasCalculations.summary(data.trips,year:year == nil ? bucket : year,month:year == nil ? month : bucket)
+                    VStack(alignment:.leading,spacing:5) {
+                        HStack { Text(label(bucket)).font(.headline); Spacer(); Text(pounds(row.total)).monospacedDigit() }
+                        Text("Travel \(pounds(row.travel)) · Stay \(pounds(row.accommodation))").font(.caption).foregroundStyle(.secondary)
+                        Text("\(row.days) days · \(String(format:"%g",row.flights)) flights · \(String(format:"%g",row.leave)) leave").font(.caption).foregroundStyle(.secondary)
+                    }.padding(.vertical,3)
+                }
+            }
             Section("Cost split") {
                 if summary.travel + summary.accommodation > 0 {
                     ProgressView(value:summary.travel,total:summary.travel + summary.accommodation).tint(.atlasAccent)
@@ -78,6 +88,8 @@ struct StatisticsView: View {
             let reviewed=AtlasCalculations.scoped(data.trips,year:year,month:month).filter { $0.bool("review") }
             if !reviewed.isEmpty { Section("Needs review") { ForEach(reviewed) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } } }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Statistics")
         .onChange(of:year) { _ in month=nil }
         .sheet(isPresented:$editingAnnual) { if let year, let values=data.summaries[String(year)]?.object { NavigationStack { AnnualEditorView(year:year,values:values) } } }
@@ -105,6 +117,10 @@ struct AnnualEditorView: View {
             if let failure { Text(failure).foregroundStyle(.red) }
             Section { Button(saving ? "Saving…" : "Save figures") { Task { await save() } }.disabled(saving) }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
+        .modifier(KeyboardDismissToolbar())
         .navigationTitle("\(year) figures").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Cancel") { confirmDiscard=true } } }
         .interactiveDismissDisabled()

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @main
 struct AtlasApp: App {
@@ -40,6 +41,17 @@ struct AtlasRoot: View {
                     Text(store.error ?? "Connect to your home network or Tailscale and try again.").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     Button("Try again") { Task { await store.load() } }.buttonStyle(.borderedProminent)
                 }.padding(30)
+            }
+        }
+    }
+}
+
+struct KeyboardDismissToolbar: ViewModifier {
+    func body(content: Content) -> some View {
+        content.toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
             }
         }
     }

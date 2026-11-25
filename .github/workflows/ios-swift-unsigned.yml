@@ -33,19 +33,11 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -derivedDataPath "$RUNNER_TEMP/atlas-simulator" -resultBundlePath "$RUNNER_TEMP/AtlasUITests.xcresult" \
             CODE_SIGNING_ALLOWED=NO
-      - name: Capture simulator screen
-        run: |
-          DEVICE_ID=$(cat "$RUNNER_TEMP/atlas-device-id")
-          xcrun simctl terminate "$DEVICE_ID" uk.sww.atlas || true
-          SIMCTL_CHILD_ATLAS_TEST_BASE=http://127.0.0.1:18780 xcrun simctl launch "$DEVICE_ID" uk.sww.atlas
-          sleep 5
-          xcrun simctl io "$DEVICE_ID" screenshot "$RUNNER_TEMP/Atlas-simulator.png"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: atlas-simulator-evidence
           path: |
-            ${{ runner.temp }}/Atlas-simulator.png
             ${{ runner.temp }}/AtlasUITests.xcresult
             ${{ runner.temp }}/atlas-ui-server.log
           if-no-files-found: warn
