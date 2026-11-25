@@ -7,9 +7,18 @@ private struct CountryPlace: Identifiable {
 }
 
 struct CountryDetailView: View {
+    @EnvironmentObject private var store: AtlasStore
     let country: String
-    let trips: [Record]
-    let data: AtlasData
+    let mode: String
+    let initialData: AtlasData
+    private var data: AtlasData { store.data ?? initialData }
+    private var trips: [Record] {
+        let today = localDateISO(Date())
+        return data.trips.filter { trip in
+            !trip.start.isEmpty && data.countries(for: trip).contains(country) &&
+            (mode == "All" || (mode == "Visited" ? trip.start <= today : trip.start > today))
+        }
+    }
 
     private var visits: [Record] { AtlasCalculations.uniqueVisits(trips) }
     private var places: [CountryPlace] {
@@ -55,7 +64,7 @@ struct CountryDetailView: View {
                 } else {
                     ForEach(places) { place in
                         NavigationLink {
-                            CountryPlaceVisitsView(name: place.name, trips: place.trips, data: data)
+                            CountryPlaceVisitsView(name: place.name, tripIDs: place.trips.map(\.id), initialData: data)
                         } label: {
                             HStack {
                                 Label(place.name, systemImage: "mappin")
@@ -80,9 +89,12 @@ struct CountryDetailView: View {
 }
 
 private struct CountryPlaceVisitsView: View {
+    @EnvironmentObject private var store: AtlasStore
     let name: String
-    let trips: [Record]
-    let data: AtlasData
+    let tripIDs: [Int]
+    let initialData: AtlasData
+    private var data: AtlasData { store.data ?? initialData }
+    private var trips: [Record] { data.trips.filter { tripIDs.contains($0.id) } }
     var body: some View {
         List {
             Section("Overview") {

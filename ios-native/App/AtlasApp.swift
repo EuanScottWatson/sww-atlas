@@ -4,6 +4,7 @@ import UIKit
 @main
 struct AtlasApp: App {
     @StateObject private var store = AtlasStore()
+    @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             AtlasRoot()
@@ -12,6 +13,9 @@ struct AtlasApp: App {
                 .tint(.atlasAccent)
                 .environment(\.locale, Locale(identifier: "en_GB"))
                 .task { await store.load() }
+                .onChange(of: scenePhase) { phase in
+                    if phase == .active { Task { await store.load() } }
+                }
         }
     }
 }

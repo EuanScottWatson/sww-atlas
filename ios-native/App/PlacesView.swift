@@ -23,7 +23,11 @@ private struct NativeMap: UIViewRepresentable {
     }
     func updateUIView(_ map:MKMapView,context:Context) {
         context.coordinator.parent=self
-        let signature=pins.map(\.id).sorted().joined(separator:"|")
+        let encoder=JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let signature=pins.map { pin in
+            let details=pin.trips.compactMap { try? encoder.encode($0.fields) }.map { $0.base64EncodedString() }.sorted().joined(separator:",")
+            return "\(pin.id)|\(pin.title ?? "")|\(pin.country)|\(details)"
+        }.sorted().joined(separator:"|")
         guard signature != context.coordinator.signature else { return }
         context.coordinator.signature=signature
         map.removeAnnotations(map.annotations)
@@ -103,7 +107,7 @@ struct PlacesView: View {
                 }
             }
             if !unmapped.isEmpty { Section("Trips without map pins") { ForEach(unmapped) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } } }
-            Section("Countries · \(countries.count)") { ForEach(countries,id:\.self) { item in NavigationLink { CountryDetailView(country:item,trips:trips.filter { data.countries(for:$0).contains(item) },data:data) } label: { HStack { Text(CountryFlags.flag(item)); Text(item); Spacer(); Text("\(count(item)) trips").foregroundStyle(.secondary) } } } }
+            Section("Countries · \(countries.count)") { ForEach(countries,id:\.self) { item in NavigationLink { CountryDetailView(country:item,mode:mode,initialData:data) } label: { HStack { Text(CountryFlags.flag(item)); Text(item); Spacer(); Text("\(count(item)) trips").foregroundStyle(.secondary) } } } }
         }
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())

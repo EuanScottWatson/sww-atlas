@@ -99,6 +99,25 @@ final class AtlasNativeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
     }
 
+    func testEditedCostRefreshesTripAndStatistics() throws {
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+        app.staticTexts["Atlas Test Trip"].firstMatch.tap()
+        app.navigationBars.buttons["Edit"].tap()
+        let travel = app.textFields["Travel (£)"]
+        reveal(travel, in: app)
+        XCTAssertTrue(travel.waitForExistence(timeout: 10))
+        travel.tap()
+        let previous = travel.value as? String ?? ""
+        travel.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "150")
+        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        let save = app.buttons["Save"]
+        reveal(save, in: app); XCTAssertTrue(save.isHittable); save.tap()
+        XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Trip total should recalculate after changing travel cost")
+        app.tabBars.buttons["Statistics"].tap()
+        XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Statistics should reflect the saved trip immediately")
+    }
+
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<10 where !element.isHittable { app.swipeUp() }
     }

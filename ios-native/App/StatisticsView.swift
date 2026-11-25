@@ -135,7 +135,7 @@ struct AnnualEditorView: View {
             else { failure="Enter a valid number for \(field.label)."; return }
         }
         saving=true; failure=nil
-        do { _ = try await store.post("/api/summary",body:["year":.number(Double(year)),"values":.object(result)]); await store.load(); dismiss() } catch { failure=error.localizedDescription }
+        do { _ = try await store.post("/api/summary",body:["year":.number(Double(year)),"values":.object(result)]); store.applySummary(year:year,values:result); await store.load(); dismiss() } catch { failure=error.localizedDescription }
         saving=false
     }
 }

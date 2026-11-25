@@ -8,6 +8,7 @@ final class AtlasStore: ObservableObject {
     @Published var saving = false
     @Published var error: String?
     private var baseURL: URL?
+    private var revision = 0
     private var endpoints: [String] {
         #if DEBUG
         if let value=ProcessInfo.processInfo.environment["ATLAS_TEST_BASE"] {
@@ -23,18 +24,25 @@ final class AtlasStore: ObservableObject {
         loading = true
         error = nil
         defer { loading = false }
-        var failure = "The server could not be reached."
-        for address in endpoints {
-            do {
-                let url = URL(string: address)!
-                let bytes = try await request(base: url, path: "/api/data", body: nil, timeout: 5)
-                let object = try JSONDecoder().decode([String:JSONValue].self, from: bytes)
-                data = AtlasData(json: object)
-                baseURL = url
-                return
-            } catch { failure = error.localizedDescription }
+        while true {
+            let startingRevision = revision
+            var failure = "The server could not be reached."
+            var refreshed = false
+            for url in preferredEndpoints {
+                do {
+                    let bytes = try await request(base: url, path: "/api/data", body: nil, timeout: 5)
+                    let object = try JSONDecoder().decode([String:JSONValue].self, from: bytes)
+                    if revision != startingRevision { break }
+                    data = AtlasData(json: object)
+                    baseURL = url
+                    refreshed = true
+                    break
+                } catch { failure = error.localizedDescription }
+            }
+            if revision != startingRevision { continue }
+            if !refreshed { error = "Unable to connect to the travel server. \(failure)" }
+            return
         }
-        error = "Unable to connect to the travel server. \(failure)"
     }
 
     private var preferredEndpoints: [URL] {
@@ -75,15 +83,41 @@ final class AtlasStore: ObservableObject {
         return try JSONDecoder().decode(JSONValue.self, from: bytes)
     }
 
+    func applyRecords(_ records: [Record], kind: String) {
+        guard var snapshot = data else { return }
+        if kind == "trips" {
+            for record in records { snapshot.trips.removeAll { $0.id == record.id }; snapshot.trips.append(record) }
+        } else {
+            for record in records { snapshot.events.removeAll { $0.id == record.id }; snapshot.events.append(record) }
+        }
+        revision += 1
+        data = snapshot
+    }
+
+    func applySummary(year: Int, values: [String:JSONValue]) {
+        guard var snapshot = data else { return }
+        snapshot.summaries[String(year)] = .object(values)
+        revision += 1
+        data = snapshot
+    }
+
     func save(kind: String, record: [String:JSONValue], id: Int?) async throws -> Record {
         let result = try await post("/api/save", body: ["kind":.string(kind), "id":id.map { .number(Double($0)) } ?? .null, "record":.object(record)])
         guard let object = result.object else { throw AtlasError.message("The server returned an invalid response.") }
+        let saved = Record(object)
+        applyRecords([saved], kind: kind)
         await load()
-        return Record(object)
+        return saved
     }
 
     func delete(kind: String, id: Int) async throws {
         _ = try await post("/api/delete", body: ["kind":.string(kind), "id":.number(Double(id))])
+        if var snapshot = data {
+            if kind == "trips" { snapshot.trips.removeAll { $0.id == id } }
+            else { snapshot.events.removeAll { $0.id == id } }
+            revision += 1
+            data = snapshot
+        }
         await load()
     }
 

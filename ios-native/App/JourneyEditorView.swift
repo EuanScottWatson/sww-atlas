@@ -70,7 +70,9 @@ struct JourneyEditorView: View {
                 fields["shared_fields"] = .array(shared); records.append(.object(fields))
             }
             saving=true; failure=nil
-            _ = try await store.post("/api/save-journey",body:["group":.string(group),"records":.array(records)])
+            let response = try await store.post("/api/save-journey",body:["group":.string(group),"records":.array(records)])
+            let saved = (response.object?["trips"]?.array ?? []).compactMap { $0.object.map(Record.init) }
+            store.applyRecords(saved, kind: "trips")
             await store.load(); dismiss()
         } catch { failure=error.localizedDescription }
         saving=false
