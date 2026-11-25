@@ -1,5 +1,11 @@
 import SwiftUI
 
+private struct CalendarItem: Identifiable {
+    let kind: String
+    let record: Record
+    var id: String { "\(kind):\(record.id)" }
+}
+
 struct CalendarView:View {
     let data:AtlasData
     @State private var cursor=Date()
@@ -20,6 +26,9 @@ struct CalendarView:View {
         return (data.events.map { ("events",$0) } + AtlasCalculations.uniqueVisits(data.trips).map { ("trips",$0) }).filter { "\($0.1.name) \($0.1.text("notes"))".localizedCaseInsensitiveContains(q) }.sorted { $0.1.start > $1.1.start }
     }
     private func day(_ number:Int) -> Date { calendar.date(from:DateComponents(year:y,month:m,day:number)) ?? startOfMonth }
+    private func items(on date: String) -> [CalendarItem] {
+        data.trips(on:date).map { CalendarItem(kind:"trips",record:$0) } + data.events(on:date).map { CalendarItem(kind:"events",record:$0) }
+    }
     var body:some View {
         List {
             if !query.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty {
@@ -58,16 +67,15 @@ struct CalendarView:View {
                         }
                     }
                     Section(AtlasDates.display(localDateISO(selected))) {
-                        let date=localDateISO(selected), trips=data.trips(on:date), events=data.events(on:date)
-                        if trips.isEmpty && events.isEmpty { Text("Nothing recorded on this day.").foregroundStyle(.secondary) }
-                        ForEach(trips) { entry(kind:"trips",record:$0) }
-                        ForEach(events) { entry(kind:"events",record:$0) }
+                        let entries=items(on:localDateISO(selected))
+                        if entries.isEmpty { Text("Nothing recorded on this day.").foregroundStyle(.secondary) }
+                        ForEach(entries) { item in entry(kind:item.kind,record:item.record) }
                         Button { adding=true } label: { Label("Add event on this day",systemImage:"plus") }
                     }
                 } else if mode == "Agenda" {
                     ForEach(1...days,id:\.self) { number in
-                        let date=localDateISO(day(number)), trips=data.trips(on:date), events=data.events(on:date)
-                        if !trips.isEmpty || !events.isEmpty { Section(AtlasDates.display(date)) { ForEach(trips) { entry(kind:"trips",record:$0) }; ForEach(events) { entry(kind:"events",record:$0) } } }
+                        let date=localDateISO(day(number)), entries=items(on:date)
+                        if !entries.isEmpty { Section(AtlasDates.display(date)) { ForEach(entries) { item in entry(kind:item.kind,record:item.record) } } }
                     }
                 } else {
                     ForEach(1...12,id:\.self) { number in

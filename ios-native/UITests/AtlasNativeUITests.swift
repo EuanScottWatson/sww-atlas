@@ -43,6 +43,19 @@ final class AtlasNativeUITests: XCTestCase {
         let firstDate = app.buttons.matching(NSPredicate(format:"label BEGINSWITH %@",firstLabel)).firstMatch
         XCTAssertTrue(firstDate.waitForExistence(timeout: 10), "The first day of the month must be visible")
         capture(app, name: "Calendar")
+        let target = calendar.date(from:DateComponents(year:2026,month:5,day:1))!
+        let current = calendar.date(from:components)!
+        let delta = calendar.dateComponents([.month],from:current,to:target).month ?? 0
+        if delta != 0 {
+            let button = app.buttons[delta < 0 ? "Previous month" : "Next month"]
+            for _ in 0..<abs(delta) { button.tap() }
+        }
+        let eventDay = app.buttons.matching(NSPredicate(format:"label BEGINSWITH %@","2 May 2026,")).firstMatch
+        XCTAssertTrue(eventDay.waitForExistence(timeout:10)); eventDay.tap()
+        app.swipeUp()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout:10))
+        XCTAssertTrue(app.staticTexts["Atlas Test Event"].waitForExistence(timeout:10))
+        app.swipeDown()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10))
         search.tap()
