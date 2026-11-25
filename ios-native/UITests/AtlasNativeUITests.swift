@@ -34,6 +34,14 @@ final class AtlasNativeUITests: XCTestCase {
         capture(app, name: "Statistics")
         app.tabBars.buttons["Calendar"].tap()
         XCTAssertTrue(app.navigationBars["Calendar"].waitForExistence(timeout: 10))
+        let calendar = Calendar(identifier: .gregorian)
+        var components = calendar.dateComponents([.year,.month],from:Date())
+        components.day = 1
+        let firstDay = calendar.date(from:components)!
+        let formatter = DateFormatter(); formatter.locale = Locale(identifier:"en_GB"); formatter.dateStyle = .medium
+        let firstLabel = formatter.string(from:firstDay) + ","
+        let firstDate = app.buttons.matching(NSPredicate(format:"label BEGINSWITH %@",firstLabel)).firstMatch
+        XCTAssertTrue(firstDate.waitForExistence(timeout: 10), "The first day of the month must be visible")
         capture(app, name: "Calendar")
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10))

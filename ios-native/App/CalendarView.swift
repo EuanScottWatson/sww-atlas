@@ -41,14 +41,19 @@ struct CalendarView:View {
                     Section {
                         let columns=Array(repeating:GridItem(.flexible(),spacing:1),count:7)
                         LazyVGrid(columns:columns,spacing:6) {
-                            ForEach(Array(["M","T","W","T","F","S","S"].enumerated()),id:\.offset) { _, label in Text(label).font(.caption.weight(.semibold)).foregroundStyle(.secondary).frame(maxWidth:.infinity) }
-                            ForEach(0..<offset,id:\.self) { _ in Color.clear.frame(height:42) }
-                            ForEach(1...days,id:\.self) { number in
-                                let date=day(number), value=localDateISO(date), hasEntries = !data.trips(on:value).isEmpty || !data.events(on:value).isEmpty, isSelected=calendar.isDate(date,inSameDayAs:selected)
-                                Button { selected=date } label: {
-                                    VStack(spacing:2) { Text(String(number)).font(.subheadline.weight(isSelected ? .bold : .regular)); Circle().fill(hasEntries ? (isSelected ? Color.black : .atlasAccent) : .clear).frame(width:4,height:4) }
-                                        .frame(maxWidth:.infinity,minHeight:42).background(isSelected ? Color.atlasAccent : .clear,in:RoundedRectangle(cornerRadius:9)).foregroundStyle(isSelected ? Color.black : .primary)
-                                }.buttonStyle(.plain).accessibilityLabel("\(AtlasDates.display(value)), \(hasEntries ? "has entries" : "no entries")")
+                            ForEach(0..<(7 + offset + days),id:\.self) { index in
+                                if index < 7 {
+                                    Text(["M","T","W","T","F","S","S"][index]).font(.caption.weight(.semibold)).foregroundStyle(.secondary).frame(maxWidth:.infinity)
+                                } else if index < 7 + offset {
+                                    Color.clear.frame(height:42)
+                                } else {
+                                    let number=index - 7 - offset + 1
+                                    let date=day(number), value=localDateISO(date), hasEntries = !data.trips(on:value).isEmpty || !data.events(on:value).isEmpty, isSelected=calendar.isDate(date,inSameDayAs:selected)
+                                    Button { selected=date } label: {
+                                        VStack(spacing:2) { Text(String(number)).font(.subheadline.weight(isSelected ? .bold : .regular)); Circle().fill(hasEntries ? (isSelected ? Color.black : .atlasAccent) : .clear).frame(width:4,height:4) }
+                                            .frame(maxWidth:.infinity,minHeight:42).background(isSelected ? Color.atlasAccent : .clear,in:RoundedRectangle(cornerRadius:9)).foregroundStyle(isSelected ? Color.black : .primary)
+                                    }.buttonStyle(.plain).accessibilityLabel("\(AtlasDates.display(value)), \(hasEntries ? "has entries" : "no entries")")
+                                }
                             }
                         }
                     }
