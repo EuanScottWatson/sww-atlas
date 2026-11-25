@@ -114,8 +114,10 @@ final class AtlasNativeUITests: XCTestCase {
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         let save = app.buttons["Save"]
         reveal(save, in: app); XCTAssertTrue(save.isHittable); save.tap()
+        XCTAssertTrue(app.navigationBars["Atlas Test Trip"].waitForExistence(timeout: 30), "The trip detail should remain open after saving")
+        let total = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", "£350.00", "£350.00")).firstMatch
+        XCTAssertTrue(total.waitForExistence(timeout: 15), "Trip total should recalculate after changing travel cost")
         capture(app, name: "Updated trip total")
-        XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Trip total should recalculate after changing travel cost")
         app.tabBars.buttons["Statistics"].tap()
         capture(app, name: "Updated statistics")
         XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Statistics should reflect the saved trip immediately")
