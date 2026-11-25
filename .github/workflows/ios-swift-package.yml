@@ -1,0 +1,32 @@
+name: Package Swift iPhone app
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install project generator
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate --spec ios-native/project.yml
+      - name: Build unsigned iPhone app
+        run: |
+          xcodebuild -project ios-native/AtlasNative.xcodeproj -scheme AtlasNative \
+            -configuration Release -sdk iphoneos -derivedDataPath "$RUNNER_TEMP/atlas-swift" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          cp -R "$RUNNER_TEMP/atlas-swift/Build/Products/Release-iphoneos/TheSWWAtlas.app" "$RUNNER_TEMP/package/Payload/"
+          cd "$RUNNER_TEMP/package"
+          zip -qry SWW-Atlas-Swift-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sww-atlas-swift-unsigned-ios
+          path: ${{ runner.temp }}/package/SWW-Atlas-Swift-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
