@@ -22,11 +22,12 @@ struct AtlasApp: App {
 
 struct AtlasRoot: View {
     @EnvironmentObject private var store: AtlasStore
+    @State private var tripPath: [Int] = []
     var body: some View {
         Group {
             if let data = store.data {
                 TabView {
-                    NavigationStack { TripsView(data: data) }.tabItem { Label("Trips",systemImage:"list.bullet.rectangle") }
+                    NavigationStack(path: $tripPath) { TripsView(data: data) }.tabItem { Label("Trips",systemImage:"list.bullet.rectangle") }
                     NavigationStack { StatisticsView(data: data) }.tabItem { Label("Statistics",systemImage:"chart.bar.xaxis") }
                     NavigationStack { PlacesView(data: data) }.tabItem { Label("Map",systemImage:"map") }
                     NavigationStack { CalendarView(data: data) }.tabItem { Label("Calendar",systemImage:"calendar") }
