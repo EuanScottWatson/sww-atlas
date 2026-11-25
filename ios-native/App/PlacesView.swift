@@ -101,6 +101,8 @@ struct PlacesView: View {
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Map")
+        .modifier(KeyboardDismissToolbar())
+        .onSubmit(of:.search) { dismissAtlasKeyboard() }
         .searchable(text:$query,prompt:"Search recorded places")
         .sheet(item:$selected) { pin in NavigationStack { PlaceDetailView(pin:pin,data:data) } }
     }

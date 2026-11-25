@@ -38,7 +38,7 @@ struct StatisticsView: View {
             }
             Section("Highlights") {
                 let today=localDateISO(Date())
-                let dated=data.trips.filter { !$0.start.isEmpty }.sorted { $0.start < $1.start }
+                let dated=AtlasCalculations.scoped(data.trips,year:year,month:month).filter { !$0.start.isEmpty }.sorted { $0.start < $1.start }
                 let current=dated.first { $0.start <= today && !$0.end.isEmpty && $0.end >= today }
                 let next=dated.first { $0.start > today }
                 let latest=dated.last { $0.start <= today }

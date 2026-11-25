@@ -81,6 +81,8 @@ struct TripsView: View {
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Trips")
+        .modifier(KeyboardDismissToolbar())
+        .onSubmit(of:.search) { dismissAtlasKeyboard() }
         .searchable(text:$query,prompt:"Search trips and places")
         .refreshable { await store.load() }
         .toolbar { ToolbarItem(placement:.navigationBarLeading) { Image("Brand").resizable().aspectRatio(contentMode:.fit).frame(width:26,height:26).clipShape(RoundedRectangle(cornerRadius:6)).accessibilityHidden(true) }; ToolbarItem(placement:.primaryAction) { Menu { Button { showingNew = true } label: { Label("Add trip",systemImage:"plus") }; Button { showingJourney = true } label: { Label("Add multi-stop journey",systemImage:"point.topleft.down.curvedto.point.bottomright.up") } } label: { Image(systemName:"plus") }.accessibilityLabel("Add trip options") } }

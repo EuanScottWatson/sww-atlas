@@ -28,8 +28,9 @@ struct JourneyEditorView: View {
                 TextField("Shared leave days",text:$leave).keyboardType(.decimalPad)
             }
             ForEach($stops) { $stop in
-                Section("Stop") {
-                    TextField("Destination",text:$stop.name)
+                let number = (stops.firstIndex(where: { $0.id == stop.id }) ?? 0) + 1
+                Section("Stop \(number)") {
+                    TextField("Destination",text:$stop.name).accessibilityIdentifier("journey-destination-\(number)")
                     TextField("Country",text:$stop.country)
                     DatePicker("Start",selection:$stop.start,displayedComponents:.date)
                     DatePicker("End",selection:$stop.end,displayedComponents:.date)

@@ -40,7 +40,7 @@ final class AtlasNativeUITests: XCTestCase {
         search.tap()
         search.typeText("Atlas Test Event")
         XCTAssertTrue(app.staticTexts["Atlas Test Event"].waitForExistence(timeout: 10))
-        if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
+        search.typeText("\n")
         app.tabBars.buttons["Map"].tap()
         XCTAssertTrue(app.navigationBars["Map"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 10))
@@ -59,8 +59,8 @@ final class AtlasNativeUITests: XCTestCase {
         let name = app.textFields["Journey name"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         name.tap(); name.typeText("Atlas Test Journey")
-        let first = app.textFields.matching(identifier: "Destination").element(boundBy: 0)
-        let second = app.textFields.matching(identifier: "Destination").element(boundBy: 1)
+        let first = app.textFields["journey-destination-1"]
+        let second = app.textFields["journey-destination-2"]
         reveal(first, in: app); XCTAssertTrue(first.isHittable)
         first.tap(); first.typeText("Atlas First Stop")
         reveal(second, in: app); XCTAssertTrue(second.isHittable)
@@ -91,6 +91,26 @@ final class AtlasNativeUITests: XCTestCase {
         reveal(save, in: app); XCTAssertTrue(save.isHittable)
         save.tap()
         XCTAssertTrue(app.navigationBars["Atlas Test Trip"].waitForExistence(timeout: 15))
+    }
+
+    func testEditAnnualFigures() throws {
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+        app.tabBars.buttons["Statistics"].tap()
+        let year = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "All years")).firstMatch
+        XCTAssertTrue(year.waitForExistence(timeout: 10)); year.tap()
+        let chosen = app.buttons["2026"]
+        XCTAssertTrue(chosen.waitForExistence(timeout: 10)); chosen.tap()
+        let edit = app.buttons["Edit annual figures"]
+        reveal(edit, in: app); XCTAssertTrue(edit.isHittable); edit.tap()
+        let remaining = app.textFields["Leave remaining"]
+        reveal(remaining, in: app); XCTAssertTrue(remaining.isHittable)
+        remaining.tap()
+        remaining.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 10) + "7")
+        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        let save = app.buttons["Save figures"]
+        reveal(save, in: app); XCTAssertTrue(save.isHittable); save.tap()
+        XCTAssertTrue(app.navigationBars["Statistics"].waitForExistence(timeout: 15))
     }
 
     func testCreateTrip() throws {

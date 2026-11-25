@@ -77,7 +77,7 @@ struct CalendarView:View {
         }
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())
-        .navigationTitle("Calendar").searchable(text:$query,prompt:"Search events and trips")
+        .navigationTitle("Calendar").modifier(KeyboardDismissToolbar()).onSubmit(of:.search) { dismissAtlasKeyboard() }.searchable(text:$query,prompt:"Search events and trips")
         .toolbar { ToolbarItem(placement:.primaryAction) { Button { adding=true } label: { Image(systemName:"plus") }.accessibilityLabel("Add event") } }
         .sheet(isPresented:$adding) { NavigationStack { RecordEditorView(kind:"events",record:nil,initialDate:selected) } }
     }
