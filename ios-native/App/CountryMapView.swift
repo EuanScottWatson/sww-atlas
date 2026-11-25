@@ -34,7 +34,8 @@ struct CountryMapView: UIViewRepresentable {
         map.delegate = context.coordinator
         map.overrideUserInterfaceStyle = .dark
         map.pointOfInterestFilter = .excludingAll
-        map.setRegion(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 25, longitude: 0), span: MKCoordinateSpan(latitudeDelta: 150, longitudeDelta: 340)), animated: false)
+        map.mapType = .mutedStandard
+        map.setVisibleMapRect(MKMapRect.world, edgePadding: .zero, animated: false)
         map.addOverlays(CountryBoundaries.shapes.map(\.overlay))
         return map
     }

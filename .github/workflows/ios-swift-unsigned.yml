@@ -42,6 +42,7 @@ jobs:
           path: |
             ${{ runner.temp }}/AtlasUITests.xcresult
             ${{ runner.temp }}/atlas-ui-server.log
+            ${{ runner.temp }}/atlas-ui-data/holidays.sqlite3
           if-no-files-found: warn
           retention-days: 7
       - name: Build unsigned iPhone app

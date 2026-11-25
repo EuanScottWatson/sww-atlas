@@ -84,8 +84,8 @@ final class AtlasNativeUITests: XCTestCase {
         app.tabBars.buttons["Map"].tap()
         XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 10))
         capture(app, name: "Scratch map")
-        let france = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "France")).firstMatch
-        reveal(france, in: app)
+        app.buttons["country-directory"].tap()
+        let france = app.buttons["country-France"]
         XCTAssertTrue(france.waitForExistence(timeout: 10)); france.tap()
         XCTAssertTrue(app.staticTexts["First visit"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Latest visit"].exists)
@@ -107,14 +107,17 @@ final class AtlasNativeUITests: XCTestCase {
         let travel = app.textFields["Travel (£)"]
         reveal(travel, in: app)
         XCTAssertTrue(travel.waitForExistence(timeout: 10))
-        travel.tap()
+        travel.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         let previous = travel.value as? String ?? ""
         travel.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "150")
+        XCTAssertEqual(travel.value as? String, "150")
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         let save = app.buttons["Save"]
         reveal(save, in: app); XCTAssertTrue(save.isHittable); save.tap()
+        capture(app, name: "Updated trip total")
         XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Trip total should recalculate after changing travel cost")
         app.tabBars.buttons["Statistics"].tap()
+        capture(app, name: "Updated statistics")
         XCTAssertTrue(app.staticTexts["£350.00"].waitForExistence(timeout: 15), "Statistics should reflect the saved trip immediately")
     }
 

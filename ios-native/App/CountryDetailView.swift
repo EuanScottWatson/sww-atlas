@@ -6,6 +6,40 @@ private struct CountryPlace: Identifiable {
     var id: String { name }
 }
 
+struct CountryDirectoryView: View {
+    @EnvironmentObject private var store: AtlasStore
+    let mode: String
+    let initialData: AtlasData
+    private var data: AtlasData { store.data ?? initialData }
+    private var trips: [Record] {
+        let today = localDateISO(Date())
+        return data.trips.filter { !$0.start.isEmpty && (mode == "All" || (mode == "Visited" ? $0.start <= today : $0.start > today)) }
+    }
+    private var countries: [String] { Array(Set(trips.flatMap { data.countries(for: $0) })).sorted() }
+    var body: some View {
+        List {
+            Section("\(countries.count) countries") {
+                if countries.isEmpty { Text("No countries recorded for this selection.").foregroundStyle(.secondary) }
+                ForEach(countries, id: \.self) { country in
+                    let records = AtlasCalculations.uniqueVisits(trips.filter { data.countries(for: $0).contains(country) })
+                    let count = Set(records.map { $0.text("group").isEmpty ? "trip:\($0.id)" : "journey:\($0.text("group"))" }).count
+                    NavigationLink { CountryDetailView(country: country, mode: mode, initialData: data) } label: {
+                        HStack {
+                            Text(CountryFlags.flag(country)).font(.title2)
+                            Text(country)
+                            Spacer()
+                            Text("\(count) \(count == 1 ? "trip" : "trips")").foregroundStyle(.secondary)
+                        }
+                    }.accessibilityIdentifier("country-\(country)")
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.atlasBackground.ignoresSafeArea())
+        .navigationTitle("Countries")
+    }
+}
+
 struct CountryDetailView: View {
     @EnvironmentObject private var store: AtlasStore
     let country: String
