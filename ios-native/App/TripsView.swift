@@ -78,12 +78,13 @@ struct TripsView: View {
             Section("\(results.count) trip records") {
                 if results.isEmpty { Text("No trips match these filters.").foregroundStyle(.secondary) }
                 ForEach(results) { trip in
-                    NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) }
+                    NavigationLink(value:trip.id) { TripRow(trip:trip,data:data) }
                 }
             }
         }
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())
+        .navigationDestination(for:Int.self) { id in RecordDetailView(kind:"trips",id:id) }
         .navigationTitle("Trips")
         .modifier(KeyboardDismissToolbar())
         .onSubmit(of:.search) { dismissAtlasKeyboard() }

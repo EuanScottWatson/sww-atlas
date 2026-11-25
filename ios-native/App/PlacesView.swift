@@ -98,7 +98,7 @@ struct PlacesView: View {
                 Picker("Places",selection:$mode) { Text("Visited").tag("Visited"); Text("Upcoming").tag("Upcoming"); Text("All").tag("All") }.pickerStyle(.segmented).onChange(of:mode) { _ in country="All countries" }
                 Menu { Picker("Country",selection:$country) { Text("All countries").tag("All countries"); ForEach(countries,id:\.self) { Text("\(CountryFlags.flag($0)) \($0)").tag($0) } } } label: { Label(country,systemImage:"globe.europe.africa") }
                 Picker("Map view",selection:$mapStyle) { Text("Countries").tag("Countries"); Text("Places").tag("Places") }.pickerStyle(.segmented)
-                NavigationLink { CountryDirectoryView(mode:mode,initialData:data) } label: { Label("Explore \(countries.count) countries",systemImage:"flag") }.accessibilityIdentifier("country-directory")
+                NavigationLink { CountryDirectoryView(mode:mode,initialData:data) } label: { Label("Explore \(countries.count) \(countries.count == 1 ? "country" : "countries")",systemImage:"flag") }.accessibilityIdentifier("country-directory")
                 if mapStyle == "Countries" {
                     CountryMapView(countries:countries).frame(height:350).listRowInsets(EdgeInsets()).accessibilityLabel("World map showing recorded countries")
                     Text("Highlighted countries are based on your trips. Zoom and pan to explore. Some small islands may not appear at this map scale.").font(.footnote).foregroundStyle(.secondary)

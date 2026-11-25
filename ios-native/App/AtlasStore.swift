@@ -86,9 +86,15 @@ final class AtlasStore: ObservableObject {
     func applyRecords(_ records: [Record], kind: String) {
         guard var snapshot = data else { return }
         if kind == "trips" {
-            for record in records { snapshot.trips.removeAll { $0.id == record.id }; snapshot.trips.append(record) }
+            for record in records {
+                if let index = snapshot.trips.firstIndex(where: { $0.id == record.id }) { snapshot.trips[index] = record }
+                else { snapshot.trips.append(record) }
+            }
         } else {
-            for record in records { snapshot.events.removeAll { $0.id == record.id }; snapshot.events.append(record) }
+            for record in records {
+                if let index = snapshot.events.firstIndex(where: { $0.id == record.id }) { snapshot.events[index] = record }
+                else { snapshot.events.append(record) }
+            }
         }
         revision += 1
         data = snapshot
