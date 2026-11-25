@@ -31,10 +31,11 @@ jobs:
           HOLIDAY_DATA_DIR="$RUNNER_TEMP/atlas-ui-data" python3 website/server.py --host 127.0.0.1 --port 18780 >"$RUNNER_TEMP/atlas-ui-server.log" 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:18780/health && break; sleep 1; done
       - name: Run iPhone simulator tests
+        env:
+          TEST_FILTER: ${{ inputs.test_filter }}
         run: |
           DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for a in d["devices"].values() for x in a if x["name"].startswith("iPhone")))')
           echo "$DEVICE_ID" > "$RUNNER_TEMP/atlas-device-id"
-          TEST_FILTER="${{ inputs.test_filter }}"
           TEST_ARGS=()
           if [[ -n "$TEST_FILTER" ]]; then TEST_ARGS+=("-only-testing:$TEST_FILTER"); fi
           xcodebuild test -project ios-native/AtlasNative.xcodeproj -scheme AtlasNative "${TEST_ARGS[@]}" \
