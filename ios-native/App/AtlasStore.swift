@@ -110,10 +110,7 @@ final class AtlasStore: ObservableObject {
     func save(kind: String, record: [String:JSONValue], id: Int?) async throws -> Record {
         let result = try await post("/api/save", body: ["kind":.string(kind), "id":id.map { .number(Double($0)) } ?? .null, "record":.object(record)])
         guard let object = result.object else { throw AtlasError.message("The server returned an invalid response.") }
-        let saved = Record(object)
-        applyRecords([saved], kind: kind)
-        await load()
-        return saved
+        return Record(object)
     }
 
     func delete(kind: String, id: Int) async throws {

@@ -173,7 +173,12 @@ struct RecordEditorView: View {
             if placesChanged { result["pins"] = .array(places.map(JSONValue.object)); result["locations"] = .string(places.compactMap { $0["name"]?.string }.joined(separator:"; ")); result["lat"] = .null; result["lon"] = .null }
         }
         saving=true; failure=nil
-        do { _ = try await store.save(kind:kind,record:result,id:record?.id); dismiss() } catch { failure=error.localizedDescription }
+        do {
+            let saved = try await store.save(kind:kind,record:result,id:record?.id)
+            dismiss()
+            store.applyRecords([saved], kind:kind)
+            await store.load()
+        } catch { failure=error.localizedDescription }
         saving=false
     }
 }
