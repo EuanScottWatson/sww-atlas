@@ -80,13 +80,15 @@ final class AtlasNativeUITests: XCTestCase {
         let name = app.textFields["Journey name"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         name.tap(); name.typeText("Atlas Test Journey")
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5)); app.buttons["Done"].tap()
         let first = app.textFields["journey-destination-1"]
         let second = app.textFields["journey-destination-2"]
         reveal(first, in: app); XCTAssertTrue(first.isHittable)
         first.tap(); first.typeText("Atlas First Stop")
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5)); app.buttons["Done"].tap()
         reveal(second, in: app); XCTAssertTrue(second.isHittable)
         second.tap(); second.typeText("Atlas Second Stop")
-        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5)); app.buttons["Done"].tap()
         let save = app.buttons["Save journey"]
         reveal(save, in: app); XCTAssertTrue(save.isHittable)
         save.tap()
