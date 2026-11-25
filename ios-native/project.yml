@@ -1,0 +1,44 @@
+name: AtlasNative
+options:
+  deploymentTarget:
+    iOS: '16.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+targets:
+  AtlasNative:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Sources/AtlasCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.sww.atlas
+        PRODUCT_NAME: TheSWWAtlas
+        INFOPLIST_FILE: App/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: '1,2'
+        CURRENT_PROJECT_VERSION: '1'
+        MARKETING_VERSION: '1.0.0'
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: The SWW Atlas
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSLocalNetworkUsageDescription: The SWW Atlas connects to your home server to store your trips.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSAllowsArbitraryLoads: true
+schemes:
+  AtlasNative:
+    build:
+      targets:
+        AtlasNative: all

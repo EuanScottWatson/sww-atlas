@@ -12,3 +12,7 @@ The app includes a trips register, annual and all-time statistics, country flags
 - `npx expo export --platform ios`
 
 The GitHub Actions workflow builds an unsigned IPA, which needs signing in iLoader. The app identifier is `uk.sww.atlas`; preserve it when updating an existing installation. A successful build does not replace checking the app on an iPhone.
+
+## SwiftUI iPhone app
+
+`ios-native/` contains the separate SwiftUI implementation. It uses the same server and bundle identifier as the React Native app. The `Build Swift iPhone app` workflow tests its calculations and produces an unsigned IPA for iLoader. The existing React Native source and workflow remain available. Native device testing is required before relying on the Swift app.

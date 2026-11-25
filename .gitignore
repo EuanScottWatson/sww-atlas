@@ -47,3 +47,7 @@ yarn-error.*
 /website/data/
 /website/import/
 /website/__pycache__/
+
+# Generated Swift/Xcode build output
+/ios-native/.build/
+/ios-native/AtlasNative.xcodeproj/
