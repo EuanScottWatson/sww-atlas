@@ -66,6 +66,19 @@ struct LeavePlannerView: View {
                     }
                 }
             } else {
+                let bookedTrips = trips.filter { !$0.start.isEmpty && $0.start > localDateISO(Date()) }.sorted { $0.start < $1.start }
+                if !bookedTrips.isEmpty {
+                    Section("Booked trips") {
+                        ForEach(bookedTrips) { trip in
+                            NavigationLink { RecordDetailView(kind: "trips", id: trip.id) } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack { Text(trip.name); Spacer(); Text("− \(number(trip.number("leave") ?? 0)) days").monospacedDigit() }
+                                    Text(recordDates(trip)).font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
                 Section {
                     ForEach(plans) { plan in
                         HStack {
@@ -106,14 +119,15 @@ struct LeavePlannerView: View {
     }
     private func saveSettings(_ value: [String:JSONValue]) async -> Bool {
         guard !saving else { return false }
+        let savedYear = year
         saving = true; failure = nil
         defer { saving = false }
         do {
             let latest = try await store.fetch("/api/data")
-            var values = latest.object?["summaries"]?.object?[String(year)]?.object ?? [:]
+            var values = latest.object?["summaries"]?.object?[String(savedYear)]?.object ?? [:]
             values["leave_planner"] = .object(value)
-            _ = try await store.post("/api/summary", body: ["year":.number(Double(year)), "values":.object(values)])
-            store.applySummary(year: year, values: values)
+            _ = try await store.post("/api/summary", body: ["year":.number(Double(savedYear)), "values":.object(values)])
+            store.applySummary(year: savedYear, values: values)
             return true
         } catch { failure = error.localizedDescription; return false }
     }
