@@ -50,6 +50,6 @@ struct WikipediaOverviewView: View {
                 error = true; return
             }
             overview = result
-        } catch { error = true }
+        } catch { self.error = true }
     }
 }
