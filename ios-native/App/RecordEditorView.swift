@@ -49,7 +49,14 @@ struct RecordEditorView: View {
                 if hasStart { DatePicker("Start",selection:$startDate,displayedComponents:.date) }
                 Toggle("End date",isOn:$hasEnd)
                 if hasEnd { DatePicker("End",selection:$endDate,displayedComponents:.date) }
-                if !isTrip { Picker("Type",selection:string("kind")) { Text("Personal event").tag(""); Text("Personal event").tag("event"); Text("Calendar context").tag("context") } }
+                if !isTrip {
+                    Picker("Type",selection:Binding(get:{ draft["kind"]?.string == "context" ? "context" : "event" },set:{ draft["kind"] = .string($0) })) {
+                        Text("Personal event").tag("event")
+                        Text("Calendar context").tag("context")
+                    }
+                    Text("Calendar context is for wider periods, such as terms, exams or holidays.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
             }
             if isTrip {
                 Section("Costs and time") {
@@ -148,6 +155,7 @@ struct RecordEditorView: View {
         guard start.isEmpty || end.isEmpty || end >= start else { failure="End date must be on or after start date."; return }
         guard isTrip || (!start.isEmpty && !end.isEmpty) else { failure="Choose a start and end date."; return }
         var result=draft; result["name"] = .string(name); result["start"] = start.isEmpty ? .null : .string(start); result["end"] = end.isEmpty ? .null : .string(end)
+        if !isTrip, (result["kind"]?.string ?? "").isEmpty { result["kind"] = .string("event") }
         if isTrip {
             for key in ["travel","accommodation","total","flights","days","leave","year"] {
                 if let text=result[key]?.string {
