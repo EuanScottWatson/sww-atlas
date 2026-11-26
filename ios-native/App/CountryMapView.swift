@@ -25,17 +25,27 @@ private enum CountryBoundaries {
     }()
 }
 
+private final class WorldMap: MKMapView {
+    private var hasSetInitialRegion = false
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard !hasSetInitialRegion, bounds.width > 0, bounds.height > 0 else { return }
+        hasSetInitialRegion = true
+        setVisibleMapRect(.world, edgePadding: .zero, animated: false)
+    }
+}
+
 struct CountryMapView: UIViewRepresentable {
     let countries: [String]
 
     func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIView(context: Context) -> MKMapView {
-        let map = MKMapView()
+        let map = WorldMap()
         map.delegate = context.coordinator
         map.overrideUserInterfaceStyle = .dark
         map.pointOfInterestFilter = .excludingAll
         map.mapType = .mutedStandard
-        map.setVisibleMapRect(MKMapRect.world, edgePadding: .zero, animated: false)
         map.addOverlays(CountryBoundaries.shapes.map(\.overlay))
         return map
     }
