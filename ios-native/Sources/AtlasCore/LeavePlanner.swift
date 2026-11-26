@@ -9,6 +9,22 @@ public enum LeaveYears {
     }
 }
 
+public enum LeaveSettings {
+    public static func resolved(_ summary: [String: JSONValue]) -> [String: JSONValue] {
+        var result = summary["leave_planner"]?.object ?? [:]
+        let bought = summary["bought"]?.number ?? 0
+        if result["allowance"] == nil, let total = summary["leave_total"]?.number,
+           total.isFinite, bought.isFinite, total >= bought, bought >= 0 {
+            result["allowance"] = .number(total - bought)
+            if result["bought"] == nil { result["bought"] = .number(bought) }
+        }
+        if result["other"] == nil, let other = summary["other_usage"]?.number, other.isFinite, other >= 0 {
+            result["other"] = .number(other)
+        }
+        return result
+    }
+}
+
 public struct LeavePlan: Identifiable, Equatable {
     public var id: String
     public var name: String

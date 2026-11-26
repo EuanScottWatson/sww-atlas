@@ -79,4 +79,16 @@ final class AtlasCoreTests: XCTestCase {
         XCTAssertEqual(LeaveYears.available(trips:[], summaries:[:], current:2026), [2026])
     }
 
+    func testWorksheetAllowanceIncludesPurchasedDays() {
+        let values: [String:JSONValue] = ["leave_total":.number(38.5), "bought":.number(8), "other_usage":.number(1)]
+        let settings = LeaveSettings.resolved(values)
+        XCTAssertEqual(settings["allowance"]?.number, 30.5)
+        XCTAssertEqual(settings["bought"]?.number, 8)
+        XCTAssertEqual(settings["other"]?.number, 1)
+        let edited = LeaveSettings.resolved(values.merging(["leave_planner":.object(["allowance":.number(25), "bought":.number(2)])]) { _, new in new })
+        XCTAssertEqual(edited["allowance"]?.number, 25)
+        XCTAssertEqual(edited["bought"]?.number, 2)
+        XCTAssertNil(LeaveSettings.resolved(["leave_total":.number(2), "bought":.number(3)])["allowance"])
+    }
+
 }

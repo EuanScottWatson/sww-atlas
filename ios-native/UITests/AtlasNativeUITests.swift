@@ -28,7 +28,9 @@ final class AtlasNativeUITests: XCTestCase {
         app.buttons["Edit allowance"].tap()
         let allowance = app.textFields.element(boundBy: 0)
         XCTAssertTrue(allowance.waitForExistence(timeout: 10))
-        allowance.tap(); allowance.typeText("25")
+        allowance.tap()
+        let previous = allowance.value as? String ?? ""
+        allowance.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "25")
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         app.buttons["Save"].tap()
         XCTAssertTrue(app.buttons["Edit allowance"].waitForExistence(timeout: 15))

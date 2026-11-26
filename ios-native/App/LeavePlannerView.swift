@@ -10,7 +10,7 @@ struct LeavePlannerView: View {
     @State private var saving = false
 
     private var summary: [String:JSONValue] { store.data?.summaries[String(year)]?.object ?? [:] }
-    private var settings: [String:JSONValue] { summary["leave_planner"]?.object ?? [:] }
+    private var settings: [String:JSONValue] { LeaveSettings.resolved(summary) }
     private var plans: [LeavePlan] { (settings["plans"]?.array ?? []).compactMap(LeavePlan.init) }
     private var allowance: Double { settings["allowance"]?.number ?? 0 }
     private var bought: Double { settings["bought"]?.number ?? 0 }
@@ -41,6 +41,7 @@ struct LeavePlannerView: View {
                     Text("\(number(allowance)) allowance + \(number(bought)) bought").font(.footnote).foregroundStyle(.secondary)
                 }.padding(.vertical, 8)
                 if settings["allowance"] == nil { Text("Set your allowance to calculate your balance.").font(.footnote).foregroundStyle(.secondary) }
+                else if summary["leave_planner"]?.object?["allowance"]?.number == nil { Text("Using the original worksheet allowance. The balance is recalculated from your trips.").font(.footnote).foregroundStyle(.secondary) }
             }
             Section {
                 Picker("Leave view", selection: $mode) { Text("Balance").tag(0); Text("Plan a trip").tag(1) }.pickerStyle(.segmented)
