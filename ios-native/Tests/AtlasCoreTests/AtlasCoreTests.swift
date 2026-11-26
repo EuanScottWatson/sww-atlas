@@ -73,4 +73,10 @@ final class AtlasCoreTests: XCTestCase {
         XCTAssertEqual(LeavePlan(included.json), included)
     }
 
+    func testLeaveYearsUseOnlyRecordedYears() {
+        let trips = [Record(["year":.number(2020)]), Record(["year":.number(2027)]), Record(["year":.number(2020)]), Record([:])]
+        XCTAssertEqual(LeaveYears.available(trips:trips, summaries:["2024":.object([:]), "invalid":.object([:])], current:2026), [2027,2024,2020])
+        XCTAssertEqual(LeaveYears.available(trips:[], summaries:[:], current:2026), [2026])
+    }
+
 }

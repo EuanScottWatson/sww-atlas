@@ -21,6 +21,10 @@ final class AtlasNativeUITests: XCTestCase {
         app.tabBars.buttons["Statistics"].tap()
         app.buttons["Annual leave"].tap()
         XCTAssertTrue(app.navigationBars["Annual leave"].waitForExistence(timeout: 10))
+        app.buttons["leave-year"].tap()
+        XCTAssertTrue(app.buttons["2026"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["2016"].exists)
+        app.buttons["2026"].tap()
         app.buttons["Edit allowance"].tap()
         let allowance = app.textFields.element(boundBy: 0)
         XCTAssertTrue(allowance.waitForExistence(timeout: 10))
@@ -28,6 +32,7 @@ final class AtlasNativeUITests: XCTestCase {
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         app.buttons["Save"].tap()
         XCTAssertTrue(app.buttons["Edit allowance"].waitForExistence(timeout: 15))
+        XCTAssertEqual(app.staticTexts["leave-available"].label, "23")
         app.buttons["Plan a trip"].tap()
         app.buttons["Add idea"].tap()
         let name = app.textFields["Trip name"]
@@ -37,11 +42,21 @@ final class AtlasNativeUITests: XCTestCase {
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         app.buttons["Save"].tap()
         XCTAssertTrue(app.staticTexts["Test leave idea"].waitForExistence(timeout: 15))
+        let projection = app.staticTexts["leave-projected"]
+        reveal(projection, in: app)
+        XCTAssertEqual(projection.label, "20.5 days")
+        let include = app.switches["include-leave-plan-Test leave idea"]
+        reveal(include, in: app); include.tap()
+        reveal(projection, in: app)
+        let updated = expectation(for: NSPredicate(format:"label == %@", "23 days"), evaluatedWith: projection)
+        wait(for:[updated], timeout:15)
         capture(app, name: "Leave planning")
         app.terminate(); app.launch()
         XCTAssertTrue(app.tabBars.buttons["Statistics"].waitForExistence(timeout: 30))
         app.tabBars.buttons["Statistics"].tap(); app.buttons["Annual leave"].tap(); app.buttons["Plan a trip"].tap()
         XCTAssertTrue(app.staticTexts["Test leave idea"].waitForExistence(timeout: 15))
+        reveal(app.staticTexts["leave-projected"], in: app)
+        XCTAssertEqual(app.staticTexts["leave-projected"].label, "23 days")
     }
 
     func testTripCalendarAndEventSave() throws {

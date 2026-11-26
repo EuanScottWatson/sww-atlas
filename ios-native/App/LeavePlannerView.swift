@@ -16,6 +16,7 @@ struct LeavePlannerView: View {
     private var bought: Double { settings["bought"]?.number ?? 0 }
     private var other: Double { settings["other"]?.number ?? 0 }
     private var trips: [Record] { (store.data?.trips ?? []).filter { $0.year == year && ($0.number("leave") ?? 0) > 0 } }
+    private var years: [Int] { LeaveYears.available(trips: store.data?.trips ?? [], summaries: store.data?.summaries ?? [:], current: Calendar.current.component(.year, from: Date())) }
     private var balance: LeaveBalance { LeaveBalance(trips: trips, year: year, today: localDateISO(Date()), allowance: allowance, bought: bought, other: other, plans: plans) }
     private func number(_ value: Double) -> String { String(format: "%g", value) }
 
@@ -26,15 +27,15 @@ struct LeavePlannerView: View {
                     Text("Work days, not days away").font(.subheadline).foregroundStyle(.secondary)
                     Spacer()
                     Menu {
-                        ForEach((Calendar.current.component(.year, from: Date())-10)...(Calendar.current.component(.year, from: Date())+10), id: \.self) { value in
+                        ForEach(years, id: \.self) { value in
                             Button(String(value)) { year = value }
                         }
-                    } label: { Label(String(year), systemImage: "calendar") }
+                    } label: { Label(String(year), systemImage: "calendar") }.accessibilityIdentifier("leave-year")
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Available after booked leave").font(.subheadline).foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(settings["allowance"] == nil ? "—" : number(balance.available)).font(.system(size: 48, weight: .semibold, design: .rounded)).monospacedDigit()
+                        Text(settings["allowance"] == nil ? "—" : number(balance.available)).font(.system(size: 48, weight: .semibold, design: .rounded)).monospacedDigit().accessibilityIdentifier("leave-available")
                         Text("days").foregroundStyle(.secondary)
                     }
                     Text("\(number(allowance)) allowance + \(number(bought)) bought").font(.footnote).foregroundStyle(.secondary)
@@ -92,14 +93,14 @@ struct LeavePlannerView: View {
                             Toggle("Include \(plan.name) in projection", isOn: Binding(get: { plan.included }, set: { value in
                                 var updated = plans
                                 if let index = updated.firstIndex(where: { $0.id == plan.id }) { updated[index].included = value; Task { await savePlans(updated) } }
-                            })).labelsHidden().disabled(saving)
+                            })).labelsHidden().accessibilityIdentifier("include-leave-plan-\(plan.name)").disabled(saving)
                         }
                     }
                     .onDelete { offsets in var updated = plans; updated.remove(atOffsets: offsets); Task { await savePlans(updated) } }
                     Button { editingPlan = LeavePlan(id: UUID().uuidString, name: "", start: "", end: "", days: 0, included: true) } label: { Label("Add idea", systemImage: "plus") }
                 } header: { Text("Try your plans") } footer: { Text("Tap an idea to edit it or swipe to delete. Enter work days yourself, including half days; bank holidays are not calculated automatically.") }
                 Section("If you take these ideas") {
-                    LabeledContent("Projected remaining", value: settings["allowance"] == nil ? "Set allowance first" : "\(number(balance.projected)) days")
+                    LabeledContent("Projected remaining") { Text(settings["allowance"] == nil ? "Set allowance first" : "\(number(balance.projected)) days").accessibilityIdentifier("leave-projected") }
                     Text("Possible trips do not change your actual balance.").font(.footnote).foregroundStyle(.secondary)
                 }
             }
@@ -107,6 +108,7 @@ struct LeavePlannerView: View {
         }
         .scrollContentBackground(.hidden).background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle("Annual leave")
+        .onAppear { if !years.contains(year), let first = years.first { year = first } }
         .sheet(isPresented: $editingAllowance) { NavigationStack { LeaveAllowanceEditor(year: year, settings: settings) { value in await saveSettings(value) } } }
         .sheet(item: $editingPlan) { plan in NavigationStack { LeavePlanEditor(year: year, plan: plan) { value in
             var updated = plans

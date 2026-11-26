@@ -1,5 +1,14 @@
 import Foundation
 
+public enum LeaveYears {
+    public static func available(trips: [Record], summaries: [String: JSONValue], current: Int) -> [Int] {
+        let tripYears = trips.map(\.year).filter { (1900...2200).contains($0) }
+        let summaryYears = summaries.keys.compactMap(Int.init).filter { (1900...2200).contains($0) }
+        let years = Set(tripYears + summaryYears)
+        return years.isEmpty ? [current] : years.sorted(by: >)
+    }
+}
+
 public struct LeavePlan: Identifiable, Equatable {
     public var id: String
     public var name: String
