@@ -24,6 +24,11 @@ struct StatisticsView: View {
     private func label(_ bucket:Int) -> String { year == nil ? String(bucket) : Calendar.current.shortMonthSymbols[bucket-1] }
     var body: some View {
         List {
+            Section("Work leave") {
+                NavigationLink { LeavePlannerView() } label: {
+                    Label("Annual leave", systemImage: "calendar.badge.clock")
+                }
+            }
             Section {
                 HStack {
                     Menu { Picker("Year",selection:$year) { Text("All years").tag(Int?.none); ForEach(years,id:\.self) { Text(String($0)).tag(Optional($0)) } } } label: { Label(year.map(String.init) ?? "All years",systemImage:"calendar") }

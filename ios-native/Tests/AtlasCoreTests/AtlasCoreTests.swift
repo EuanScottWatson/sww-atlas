@@ -59,4 +59,18 @@ final class AtlasCoreTests: XCTestCase {
         XCTAssertEqual(AtlasCalculations.collapseYearDuplicates(rows).map(\.id),[1,2])
     }
 
+    func testLeaveProjectionSeparatesBookedTakenAndIdeas() {
+        let taken = Record(["year":.number(2027), "start":.string("2027-02-01"), "leave":.number(2.5)])
+        let booked = Record(["year":.number(2027), "start":.string("2027-09-01"), "leave":.number(4)])
+        let otherYear = Record(["year":.number(2028), "start":.string("2028-01-01"), "leave":.number(10)])
+        let included = LeavePlan(id:"a", name:"Idea", start:"2027-10-01", end:"2027-10-03", days:1.5, included:true)
+        let excluded = LeavePlan(id:"b", name:"Other", start:"2027-11-01", end:"2027-11-03", days:3, included:false)
+        let result = LeaveBalance(trips:[taken,booked,otherYear], year:2027, today:"2027-06-01", allowance:25, bought:2, other:1, plans:[included,excluded])
+        XCTAssertEqual(result.taken,2.5)
+        XCTAssertEqual(result.booked,4)
+        XCTAssertEqual(result.available,19.5)
+        XCTAssertEqual(result.projected,18)
+        XCTAssertEqual(LeavePlan(included.json), included)
+    }
+
 }
