@@ -48,6 +48,7 @@ final class AtlasNativeUITests: XCTestCase {
         reveal(projection, in: app)
         XCTAssertEqual(projection.label, "20.5 days")
         let include = app.switches["include-leave-plan-Test leave idea"]
+        app.swipeDown()
         reveal(include, in: app); include.tap()
         reveal(projection, in: app)
         let updated = expectation(for: NSPredicate(format:"label == %@", "23 days"), evaluatedWith: projection)
