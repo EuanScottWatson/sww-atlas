@@ -15,6 +15,35 @@ final class AtlasNativeUITests: XCTestCase {
         return app
     }
 
+    func testLeavePlannerSavesAllowanceAndIdea() throws {
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+        app.tabBars.buttons["Statistics"].tap()
+        app.buttons["Annual leave"].tap()
+        XCTAssertTrue(app.navigationBars["Annual leave"].waitForExistence(timeout: 10))
+        app.buttons["Edit allowance"].tap()
+        let allowance = app.textFields.element(boundBy: 0)
+        XCTAssertTrue(allowance.waitForExistence(timeout: 10))
+        allowance.tap(); allowance.typeText("25")
+        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.buttons["Edit allowance"].waitForExistence(timeout: 15))
+        app.buttons["Plan a trip"].tap()
+        app.buttons["Add idea"].tap()
+        let name = app.textFields["Trip name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 10)); name.tap(); name.typeText("Test leave idea")
+        let days = app.textFields["Days"]
+        days.tap(); days.typeText("2.5")
+        if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.staticTexts["Test leave idea"].waitForExistence(timeout: 15))
+        capture(app, name: "Leave planning")
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Statistics"].waitForExistence(timeout: 30))
+        app.tabBars.buttons["Statistics"].tap(); app.buttons["Annual leave"].tap(); app.buttons["Plan a trip"].tap()
+        XCTAssertTrue(app.staticTexts["Test leave idea"].waitForExistence(timeout: 15))
+    }
+
     func testTripCalendarAndEventSave() throws {
         let app = launch()
         XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
