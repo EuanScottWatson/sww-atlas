@@ -15,6 +15,23 @@ final class AtlasNativeUITests: XCTestCase {
         return app
     }
 
+    func testWikipediaIsAvailableFromCountryAndPlace() throws {
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))
+        app.tabBars.buttons["Map"].tap()
+        XCTAssertTrue(app.buttons["country-directory"].waitForExistence(timeout: 10))
+        app.buttons["country-directory"].tap()
+        let country = app.buttons["country-France"]
+        XCTAssertTrue(country.waitForExistence(timeout: 10)); country.tap()
+        XCTAssertTrue(app.staticTexts["About France"].waitForExistence(timeout: 10))
+        let place = app.buttons["country-place-Atlas Test Trip"]
+        reveal(place, in: app)
+        XCTAssertTrue(place.waitForExistence(timeout: 10)); place.tap()
+        XCTAssertTrue(app.staticTexts["About Atlas Test Trip"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.links["Search Wikipedia"].exists || app.links["Open Wikipedia"].exists)
+        capture(app, name: "Place overview")
+    }
+
     func testLeavePlannerSavesAllowanceAndIdea() throws {
         let app = launch()
         XCTAssertTrue(app.staticTexts["Atlas Test Trip"].waitForExistence(timeout: 30))

@@ -62,11 +62,11 @@ final class AtlasStore: ObservableObject {
         throw AtlasError.message("Unable to reach the travel server. Check your connection or connect Tailscale, then try again.")
     }
 
-    func fetch(_ path: String) async throws -> JSONValue {
+    func fetch(_ path: String, timeout: TimeInterval = 5) async throws -> JSONValue {
         var lastError: Error = AtlasError.message("Unable to reach the travel server.")
         for url in preferredEndpoints {
             do {
-                let bytes = try await request(base: url, path: path, body: nil, timeout: 5)
+                let bytes = try await request(base: url, path: path, body: nil, timeout: timeout)
                 let value = try JSONDecoder().decode(JSONValue.self, from: bytes)
                 baseURL = url
                 return value

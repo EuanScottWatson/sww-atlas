@@ -92,20 +92,21 @@ struct CountryDetailView: View {
                 if !firstVisit.isEmpty { LabeledContent("First visit", value: AtlasDates.display(firstVisit)) }
                 if !latestVisit.isEmpty { LabeledContent("Latest visit", value: AtlasDates.display(latestVisit)) }
             }
+            WikipediaOverviewView(name: country)
             Section("Recorded places · \(places.count)") {
                 if places.isEmpty {
                     Text("No named places recorded yet. Add a place to a trip to see it here.").foregroundStyle(.secondary)
                 } else {
                     ForEach(places) { place in
                         NavigationLink {
-                            CountryPlaceVisitsView(name: place.name, tripIDs: place.trips.map(\.id), initialData: data)
+                            CountryPlaceVisitsView(name: place.name, country: country, tripIDs: place.trips.map(\.id), initialData: data)
                         } label: {
                             HStack {
                                 Label(place.name, systemImage: "mappin")
                                 Spacer()
                                 Text("\(place.trips.count) \(place.trips.count == 1 ? "visit" : "visits")").foregroundStyle(.secondary)
                             }
-                        }
+                        }.accessibilityIdentifier("country-place-\(place.name)")
                     }
                 }
             }
@@ -125,12 +126,14 @@ struct CountryDetailView: View {
 private struct CountryPlaceVisitsView: View {
     @EnvironmentObject private var store: AtlasStore
     let name: String
+    let country: String
     let tripIDs: [Int]
     let initialData: AtlasData
     private var data: AtlasData { store.data ?? initialData }
     private var trips: [Record] { data.trips.filter { tripIDs.contains($0.id) } }
     var body: some View {
         List {
+            WikipediaOverviewView(name: name, country: country)
             Section("Overview") {
                 LabeledContent("Visits", value: "\(trips.count)")
                 LabeledContent("Days on recorded trips", value: "\(AtlasCalculations.days(trips))")

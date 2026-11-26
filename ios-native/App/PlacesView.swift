@@ -123,25 +123,15 @@ private struct PlaceDetailView:View {
     @EnvironmentObject private var store:AtlasStore
     @Environment(\.dismiss) private var dismiss
     let pin:PlacePin; let data:AtlasData
-    @State private var overview:[String:JSONValue]?
-    @State private var unavailable=false
     var body:some View {
         List {
-            Section(pin.country) {
-                if let extract=overview?["extract"]?.string { Text(extract) }
-                else if unavailable { Text("Place overview unavailable.").foregroundStyle(.secondary) }
-                else { ProgressView("Loading place overview…") }
-                if let text=overview?["url"]?.string, let url=URL(string:text) { Link("Open Wikipedia",destination:url) }
-            }
+            WikipediaOverviewView(name: pin.title ?? "Place", country: pin.country, latitude: pin.coordinate.latitude, longitude: pin.coordinate.longitude)
             Section("Your visits") { ForEach(AtlasCalculations.uniqueVisits(pin.trips)) { trip in NavigationLink { RecordDetailView(kind:"trips",id:trip.id) } label: { TripRow(trip:trip,data:data) } } }
         }
         .scrollContentBackground(.hidden)
         .background(Color.atlasBackground.ignoresSafeArea())
         .navigationTitle(pin.title ?? "Place").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Done") { dismiss() } } }
-        .task {
-            var components=URLComponents(); components.path="/api/place"; components.queryItems=[URLQueryItem(name:"name",value:pin.title),URLQueryItem(name:"country",value:pin.country),URLQueryItem(name:"lat",value:String(pin.coordinate.latitude)),URLQueryItem(name:"lon",value:String(pin.coordinate.longitude))]
-            do { overview=try await store.fetch(components.string ?? "").object; unavailable=overview?["available"]?.bool == false } catch { unavailable=true }
-        }
+
     }
 }
