@@ -183,8 +183,10 @@ final class AtlasNativeUITests: XCTestCase {
         reveal(edit, in: app); XCTAssertTrue(edit.isHittable); edit.tap()
         let remaining = app.textFields["Leave remaining"]
         reveal(remaining, in: app); XCTAssertTrue(remaining.isHittable)
-        remaining.tap()
-        remaining.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 10) + "7")
+        remaining.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        let previous = remaining.value as? String ?? ""
+        remaining.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count) + "7")
+        XCTAssertEqual(remaining.value as? String, "7")
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         let save = app.buttons["Save figures"]
         reveal(save, in: app); XCTAssertTrue(save.isHittable); save.tap()
