@@ -24,7 +24,7 @@ final class AtlasNativeUITests: XCTestCase {
         app.buttons["leave-year"].tap()
         XCTAssertTrue(app.buttons["2026"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["2016"].exists)
-        app.buttons.matching(identifier:"2026").element(boundBy: 1).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
         app.buttons["Edit allowance"].tap()
         let allowance = app.textFields.element(boundBy: 0)
         XCTAssertTrue(allowance.waitForExistence(timeout: 10))
